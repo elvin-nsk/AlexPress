@@ -1,9 +1,9 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.01.23
-'   Сайты           : https://vk.com/elvin_macro/Bleeds
-'                     https://github.com/elvin-nsk/Bleeds
+'   Версия          : 2023.01.26
+'   Сайты           : https://vk.com/elvin_macro/
+'                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '===============================================================================
 

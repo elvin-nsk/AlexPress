@@ -95,7 +95,6 @@ Private Sub ExecutabilityCheck()
     End If
     btnAddBleeds.Enabled = True
     btnAddBleeds.Caption = "Добавить припуски"
-    btnAddBleeds.SetFocus
 End Sub
 
 Private Sub VisibilityCheck()
