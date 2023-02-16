@@ -44,15 +44,15 @@ Private Sub UserForm_Initialize()
     Set This.Main = MainLogic.Create(Me)
     With This
         Set This.QuantityOnPressSheet = _
-            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong)
+            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
         Set This.PressSheetWidth = _
-            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeLong)
+            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeLong, 1)
         Set This.PressSheetHeight = _
-            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeLong)
+            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeLong, 1)
         Set This.ImpositionColumns = _
-            TextBoxHandler.Create(ImpositionColumns, TextBoxTypeLong)
+            TextBoxHandler.Create(ImpositionColumns, TextBoxTypeLong, 1)
         Set This.ImpositionRows = _
-            TextBoxHandler.Create(ImpositionRows, TextBoxTypeLong)
+            TextBoxHandler.Create(ImpositionRows, TextBoxTypeLong, 1)
     End With
 End Sub
 

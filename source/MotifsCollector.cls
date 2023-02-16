@@ -24,10 +24,6 @@ Private Sub Class_Initialize()
     Set This.Motifs = New Collection
 End Sub
 
-Private Sub Class_Terminate()
-'
-End Sub
-
 '===============================================================================
 ' # Public
 
