@@ -4,7 +4,7 @@ Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainView
    ClientHeight    =   4230
    ClientLeft      =   45
    ClientTop       =   375
-   ClientWidth     =   3495
+   ClientWidth     =   7785
    OleObjectBlob   =   "MainView.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
@@ -20,17 +20,46 @@ Option Explicit
 Public BleedsMin As Double
 Public BleedsMax As Double
 
-Private Main As MainLogic
+Private Type typeThis
+    Main As MainLogic
+    Motifs As MotifsCollector
+    ActiveMotif As Motif
+    QuantityOnPressSheet As TextBoxHandler
+    PressSheetWidth As TextBoxHandler
+    PressSheetHeight As TextBoxHandler
+    ImpositionColumns As TextBoxHandler
+    ImpositionRows As TextBoxHandler
+    ImpositionCreated As Boolean
+End Type
+Private This As typeThis
+
 Private WithEvents App As Application
 Attribute App.VB_VarHelpID = -1
 
 '===============================================================================
 
-Private Sub UserForm_Activate()
-    Set Main = MainLogic.Create(Me)
+Private Sub UserForm_Initialize()
     Set App = Application
-    ExecutabilityCheck
-    VisibilityCheck
+    Set This.Motifs = New MotifsCollector
+    Set This.Main = MainLogic.Create(Me)
+    With This
+        Set This.QuantityOnPressSheet = _
+            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong)
+        Set This.PressSheetWidth = _
+            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeLong)
+        Set This.PressSheetHeight = _
+            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeLong)
+        Set This.ImpositionColumns = _
+            TextBoxHandler.Create(ImpositionColumns, TextBoxTypeLong)
+        Set This.ImpositionRows = _
+            TextBoxHandler.Create(ImpositionRows, TextBoxTypeLong)
+    End With
+End Sub
+
+Private Sub UserForm_Activate()
+    This.QuantityOnPressSheet = 1
+    ResetStatus
+    CheckControls
 End Sub
 
 Private Sub tbBleeds_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
@@ -59,19 +88,90 @@ Private Sub btnCancel_Click()
 End Sub
 
 Private Sub btnAddBleeds_Click()
-    Main.AddBleeds Me
+    This.Main.AddBleeds Me
 End Sub
 
 Private Sub btnAddPages_Click()
-    Main.AddPages Me
+    This.Main.AddPages Me
+End Sub
+
+Private Sub SetFace_Click()
+    CreateMotifIfNothing
+    With This.ActiveMotif
+        Set .SurfaceA = New Surface
+        Set .SurfaceA.Content = ActiveSelectionRange.FirstShape
+        .Quantity = This.QuantityOnPressSheet
+    End With
+    If OptionNoBacks Then
+        ActiveMotifAddAndReset
+    Else
+        CancelAssignment.Enabled = True
+        If This.ActiveMotif.HasSurfaceB Then
+            ActiveMotifAddAndReset
+        Else
+            SetMotifStateToNeedBack
+        End If
+    End If
+End Sub
+
+Private Sub SetBack_Click()
+    CreateMotifIfNothing
+    With This.ActiveMotif
+        Set .SurfaceB = New Surface
+        Set .SurfaceB.Content = ActiveSelectionRange.FirstShape
+        .Quantity = This.QuantityOnPressSheet
+    End With
+    If This.ActiveMotif.HasSurfaceA Then
+        ActiveMotifAddAndReset
+    Else
+        CancelAssignment.Enabled = True
+        SetMotifStateToNeedFace
+    End If
+End Sub
+
+Private Sub CancelAssignment_Click()
+    If Not This.ActiveMotif Is Nothing Then
+        Set This.ActiveMotif = Nothing
+        SetFace.Enabled = True
+        SetBack.Enabled = True
+        MotifStatusLabel.Caption = vbNullString
+    End If
+End Sub
+
+Private Sub ResetAssignments_Click()
+    ResetAll
+End Sub
+
+Private Sub CreateImpositions_Click()
+    This.Main.MakeImposition Me, This.Motifs
+    This.ImpositionCreated = True
+End Sub
+
+Private Sub SwapPressSheetDims_Click()
+    Dim Temp As Long
+    Temp = PressSheetWidth
+    PressSheetWidth = PressSheetHeight
+    PressSheetHeight = Temp
+End Sub
+
+Private Sub SwapRowsAndColumns_Click()
+    Dim Temp As Long
+    Temp = ImpositionColumns
+    ImpositionColumns = ImpositionRows
+    ImpositionRows = Temp
 End Sub
 
 Private Sub App_SelectionChange()
-    ExecutabilityCheck
-    VisibilityCheck
+    CheckControls
 End Sub
 
 '===============================================================================
+
+Private Sub CheckControls()
+    ExecutabilityCheck
+    VisibilityCheck
+    ImpositionCheck
+End Sub
 
 Private Sub ExecutabilityCheck()
     If ActiveDocument Is Nothing Then
@@ -123,10 +223,147 @@ Private Sub RastrHide()
     cbFlatten.Enabled = False
 End Sub
 
-Private Sub FormCancel()
-    Main.Dispose Me
-    Me.Hide
+Private Sub ImpositionCheck()
+    If ActiveDocument Is Nothing Then
+        DisableMotifControls
+        ResetStatus
+        Exit Sub
+    End If
+    UpdateImpositionState
+    If ActiveSelectionRange.Count = 0 Then
+        MotifStatusLabel.Caption = vbNullString
+        DisableMotifControls
+        Exit Sub
+    End If
+    If ActiveSelectionRange.Count > 1 Then
+        SetMotifStatusSelectOne
+        DisableMotifControls
+        Exit Sub
+    End If
+    If This.ActiveMotif Is Nothing Then
+        SetFace.Enabled = True
+        SetBack.Enabled = OptionWithBacks
+        CancelAssignment.Enabled = False
+        MotifStatusLabel.Caption = vbNullString
+    Else
+        If OptionWithBacks Then
+            If This.ActiveMotif.HasSurfaceA _
+           And Not This.ActiveMotif.HasSurfaceB Then
+                CancelAssignment.Enabled = True
+                SetMotifStateToNeedBack
+            ElseIf Not This.ActiveMotif.HasSurfaceA _
+               And This.ActiveMotif.HasSurfaceB Then
+                CancelAssignment.Enabled = True
+                SetMotifStateToNeedFace
+            Else
+                MotifStatusLabel.Caption = vbNullString
+            End If
+        Else
+            MotifStatusLabel.Caption = vbNullString
+        End If
+    End If
+    
+    
+
 End Sub
+
+Private Sub CreateMotifIfNothing()
+    If This.ActiveMotif Is Nothing Then Set This.ActiveMotif = New Motif
+End Sub
+
+Private Property Get MotifAddingHasBegun() As Boolean
+    MotifAddingHasBegun = (This.Motifs.Count > 0) _
+                       Or (Not This.ActiveMotif Is Nothing)
+End Property
+
+Private Property Get UnsafeToClose() As Boolean
+    UnsafeToClose = MotifAddingHasBegun And Not This.ImpositionCreated
+End Property
+
+Private Sub DisableMotifControls()
+    SetFace.Enabled = False
+    SetBack.Enabled = False
+    CancelAssignment.Enabled = False
+End Sub
+
+Private Sub ActiveMotifAddAndReset()
+    This.Motifs.Add This.ActiveMotif
+    Set This.ActiveMotif = Nothing
+    SetMotifStateToAdded
+    UpdateImpositionState
+End Sub
+
+Private Sub ResetAll()
+    Set This.Motifs = New MotifsCollector
+    UpdateImpositionState
+End Sub
+
+Private Sub SetMotifStateToNeedFace()
+    SetFace.Enabled = True
+    SetBack.Enabled = False
+    MotifStatusLabel.Caption = "Оборот добавлен, добавьте лицо"
+End Sub
+
+Private Sub SetMotifStateToNeedBack()
+    SetFace.Enabled = False
+    SetBack.Enabled = True
+    MotifStatusLabel.Caption = "Лицо добавлено, добавьте оборот"
+End Sub
+
+Private Sub SetMotifStateToAdded()
+    DisableMotifControls
+    MotifStatusLabel.Caption = "Макет добавлен"
+End Sub
+
+Private Sub SetMotifStatusAreadyAdded()
+    MotifStatusLabel.Caption = "Этот макет уже добавлен"
+End Sub
+
+Private Sub SetMotifStatusSelectOne()
+    MotifStatusLabel.Caption = "Выберите один объект"
+End Sub
+
+Private Sub UpdateImpositionState()
+    If This.Motifs.Count > 0 Then
+        ImpositionStatusLabel.Caption = "Кол-во макетов: " & This.Motifs.Count
+        ResetAssignments.Enabled = True
+        CreateImpositions.Enabled = True
+    Else
+        ResetStatus
+        ResetAssignments.Enabled = False
+        CreateImpositions.Enabled = False
+    End If
+End Sub
+
+Private Sub ResetStatus()
+    MotifStatusLabel.Caption = vbNullString
+    ImpositionStatusLabel.Caption = vbNullString
+End Sub
+
+Private Sub FormCancel()
+    Dim OkToExit As VbMsgBoxResult
+    If UnsafeToClose Then
+        OkToExit = AskToClose
+    Else
+        OkToExit = vbOK
+    End If
+    If OkToExit = vbOK Then
+        This.Main.Dispose Me
+        Me.Hide
+    End If
+End Sub
+
+Private Function AskToClose() As VbMsgBoxResult
+    AskToClose = _
+        VBA.MsgBox( _
+            "Макеты не разложены." _
+          & vbCr _
+          & "Если закрыть, назначение макетов сбросится." _
+          & vbCr _
+          & "Хотите закрыть?", _
+            vbOKCancel + vbExclamation _
+        )
+End Function
 
 '===============================================================================
 

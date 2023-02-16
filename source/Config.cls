@@ -32,6 +32,13 @@ Public BitmapTrimSize As Long
 Public BitmapFlatten As Boolean
 Public PagesToAdd As Long
 
+Public PressSheetWidth As Double
+Public PressSheetHeight As Double
+Public ImpositionColumns As Long
+Public ImpositionRows As Long
+Public OptionWithBacks As Boolean
+Public OptionNoBacks As Boolean
+
 '-------------------------------------------------------------------------------
 
 Private Sub Assign(ByVal Action As iniAction)
@@ -50,6 +57,14 @@ Private Sub Assign(ByVal Action As iniAction)
         
         .Section = "Pages"
         .KeyVar "PagesToAdd", PagesToAdd, 1
+        
+        .Section = "Imposition"
+        .KeyVar "PressSheetWidth", PressSheetWidth, 320
+        .KeyVar "PressSheetHeight", PressSheetHeight, 450
+        .KeyVar "ImpositionColumns", ImpositionColumns, 3
+        .KeyVar "ImpositionRows", ImpositionRows, 4
+        .KeyVar "OptionWithBacks", OptionWithBacks, True
+        .KeyVar "OptionNoBacks", OptionNoBacks, False
     
     End With
     

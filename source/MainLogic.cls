@@ -31,6 +31,7 @@ Private Type typeThis
     Cfg As Config
 End Type
 Private This As typeThis
+Attribute This.VB_VarHelpID = -1
 
 '===============================================================================
 ' # Constructors
@@ -60,6 +61,12 @@ Public Function Create( _
         .tbTrim.Value = Cfg.BitmapTrimSize
         .cbFlatten.Value = Cfg.BitmapFlatten
         .tbPages.Value = Cfg.PagesToAdd
+        .PressSheetWidth = Cfg.PressSheetWidth
+        .PressSheetHeight = Cfg.PressSheetHeight
+        .ImpositionColumns = Cfg.ImpositionColumns
+        .ImpositionRows = Cfg.ImpositionRows
+        .OptionWithBacks = Cfg.OptionWithBacks
+        .OptionNoBacks = Cfg.OptionNoBacks
     
     End With
     
@@ -83,12 +90,12 @@ Public Function AddBleeds(ByVal View As MainView)
     
     FillCfgFromView View
     
-    lib_elvin.BoostStart "Добавить припуски", AlexPress.RELEASE
+    BoostStart "Добавить припуски", AlexPress.RELEASE
         
     SetBleeds This.Cfg
     
 Finally:
-    lib_elvin.BoostFinish
+    BoostFinish
     Exit Function
 
 Catch:
@@ -102,12 +109,56 @@ Public Function AddPages(ByVal View As MainView)
     
     FillCfgFromView View
     
-    lib_elvin.BoostStart "Добавить страницы", AlexPress.RELEASE
+    BoostStart "Добавить страницы", AlexPress.RELEASE
         
     AddPagesRoutine This.Cfg
     
 Finally:
-    lib_elvin.BoostFinish
+    BoostFinish
+    Exit Function
+
+Catch:
+    MsgBox "Ошибка: " & Err.Description, vbCritical
+    Resume Finally
+End Function
+
+Public Function MakeImposition( _
+                    ByVal View As MainView, _
+                    ByVal Motifs As MotifsCollector _
+                )
+
+    If AlexPress.RELEASE Then On Error GoTo Catch
+    
+    FillCfgFromView View
+    
+    Dim TempFiles As Collection
+    Set TempFiles = Motifs.ExportToTemp
+    Dim Doc As Document
+    Set Doc = CreateDocument
+    Doc.Name = "Спуск " _
+             & This.Cfg.PressSheetWidth _
+             & "x" _
+             & This.Cfg.PressSheetHeight
+    Doc.Unit = cdrMillimeter
+    Doc.MasterPage.SizeWidth = This.Cfg.PressSheetWidth
+    Doc.MasterPage.SizeHeight = This.Cfg.PressSheetHeight
+    Doc.Activate
+    
+    BoostStart "Спуск", AlexPress.RELEASE
+        
+    With MotifsImposer.CreateFromImport( _
+             Motifs.AsCollection, _
+             This.Cfg.OptionWithBacks _
+         )
+        .PlaceCropMarks = True
+        .Bleeds = This.Cfg.Bleeds
+        .ImposeAutoAddPages
+    End With
+    
+    DeleteFiles TempFiles
+    
+Finally:
+    BoostFinish
     Exit Function
 
 Catch:
@@ -146,6 +197,12 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.BitmapTrimSize = .tbTrim.Value
         This.Cfg.BitmapFlatten = .cbFlatten.Value
         This.Cfg.PagesToAdd = .tbPages.Value
+        This.Cfg.PressSheetWidth = .PressSheetWidth
+        This.Cfg.PressSheetHeight = .PressSheetHeight
+        This.Cfg.ImpositionColumns = .ImpositionColumns
+        This.Cfg.ImpositionRows = .ImpositionRows
+        This.Cfg.OptionWithBacks = .OptionWithBacks
+        This.Cfg.OptionNoBacks = .OptionNoBacks
     
     End With
 End Sub
@@ -326,7 +383,7 @@ Private Function CreateSideBleed( _
     End Select
     
     Set CreateSideBleed = _
-        lib_elvin.CropTool( _
+        CropTool( _
             BitmapShape.Duplicate, BitmapShape.LeftX + LeftAdd, _
             BitmapShape.TopY + TopAdd, _
             BitmapShape.RightX + RightAdd, _
@@ -372,7 +429,7 @@ Private Function CreateCornerBleed( _
             ShiftY = -Bleed
     End Select
     Set CreateCornerBleed = _
-        lib_elvin.CropTool( _
+        CropTool( _
             BitmapShape.Duplicate, BitmapShape.LeftX + LeftAdd, _
             BitmapShape.TopY + TopAdd, _
             BitmapShape.RightX + RightAdd, _
@@ -428,3 +485,10 @@ Private Property Get GetShapesOnPage( _
         End If
     Next Shape
 End Property
+
+Private Sub DeleteFiles(ByVal Files As Collection)
+    Dim File As IFileSpec
+    For Each File In Files
+        VBA.Kill File
+    Next File
+End Sub
