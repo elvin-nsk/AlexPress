@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.02.16
+'   Версия          : 2023.02.25
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -55,11 +55,16 @@ Private Sub TestImposer()
     Doc.Unit = cdrMillimeter
     Doc.MasterPage.SetSize 300, 200
     
+    BoostStart "TestImposer", True
+   
     With MotifsImposer.CreateFromImport(Motifs.AsCollection, True)
         .Bleeds = 2
         .PlaceCropMarks = True
+        .FillLastPage = True
         .ImposeAutoAddPages
     End With
+    
+    BoostFinish True
 
 End Sub
 

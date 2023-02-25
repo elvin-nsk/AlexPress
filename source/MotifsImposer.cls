@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 '===============================================================================
 '   Модуль          : MotifsImposer
-'   Версия          : 2023.02.16
+'   Версия          : 2023.02.25
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Сайт            : https://github.com/elvin-nsk/LowCoupledFromCore
 '   Назначение      :
@@ -34,6 +34,7 @@ Private Type typeThis
     EdgeMarginRight As Double
     EdgeMarginTop As Double
     Elements As Collection
+    FillLastPage As Boolean
     HorizontalSpace As Double
     MaxPlacesInHeight As Long
     MaxPlacesInWidth As Long
@@ -68,6 +69,7 @@ Friend Sub Inject( _
            )
     With This
         .CropMarksLength = 3
+        .FillLastPage = False
         .ReferencePoint = cdrCenter
         .TwoSided = TwoSided
         Set .Elements = ImportAsMarkedElements(Motifs)
@@ -121,6 +123,13 @@ Public Property Get EdgeMarginTop() As Double
 End Property
 Public Property Let EdgeMarginTop(RHS As Double)
     This.EdgeMarginTop = RHS
+End Property
+
+Public Property Get FillLastPage() As Boolean
+    FillLastPage = This.FillLastPage
+End Property
+Public Property Let FillLastPage(RHS As Boolean)
+    This.FillLastPage = RHS
 End Property
 
 Public Property Get HorizontalSpace() As Double
@@ -194,11 +203,16 @@ Private Sub Impose( _
         Set Elements = .Elements
         Dim Impositions As Collection
         Set Impositions = New Collection
+        Dim ImpositionIndex As Long
+        Dim LastPivot As IPoint
+        Dim LastCount As Long
+        Dim LastIteration As Boolean
         Dim ComposedShapes As ShapeRange
         
         Dim ElementsComposer As Composer
     
         Do
+            ImpositionIndex = ImpositionIndex + 1
             Set ElementsComposer = _
                 Composer.CreateAndCompose( _
                     Elements:=Elements, _
@@ -216,10 +230,12 @@ Private Sub Impose( _
                     HorizontalSpace:=.HorizontalSpace, _
                     VerticalSpace:=.VerticalSpace _
                 )
-                
+            
             Set ComposedShapes = _
                 ElementsToShapes(ElementsComposer.ComposedElements)
-            AlignImposition ComposedShapes
+            
+            Set LastPivot = AlignImposition(ComposedShapes, LastPivot)
+            LastCount = ElementsComposer.ComposedElements.Count
             
             RaiseEvent OnPageImposed
                           
@@ -227,6 +243,16 @@ Private Sub Impose( _
             
             Impositions.Add ComposedShapes
             Set Elements = ElementsComposer.RemainingElements
+            
+            If Elements.Count < LastCount _
+           And Elements.Count > 0 _
+           And .FillLastPage Then
+                If .FillLastPage Then
+                    AddRandomElements _
+                        Elements, _
+                        LastCount - ElementsComposer.RemainingElements.Count
+                End If
+            End If
             
         Loop While Elements.Count > 0
         
@@ -241,10 +267,38 @@ End Sub
 '===============================================================================
 ' # Helpers
 
-Private Sub AlignImposition( _
-                ByVal ComposedShapes As ShapeRange _
+Private Function AlignImposition( _
+                ByVal ComposedShapes As ShapeRange, _
+                ByVal Pivot As IPoint _
+            ) As IPoint
+    If Pivot Is Nothing Then
+        Align ComposedShapes, ActivePage, This.ReferencePoint
+        Set AlignImposition = _
+            FreePoint.Create( _
+                ComposedShapes.LeftX, _
+                ComposedShapes.TopY _
             )
-    Align ComposedShapes, ActivePage, This.ReferencePoint
+    Else
+        ComposedShapes.LeftX = Pivot.X
+        ComposedShapes.TopY = Pivot.Y
+    End If
+End Function
+
+Private Sub AddRandomElements( _
+                ByVal ioElements As Collection, _
+                ByVal Number As Long _
+            )
+    VBA.Randomize
+    Dim Index As Long
+    Dim RandomElement As IComposerElement
+    Dim Shapes As ShapeRange
+    Dim NewElement As IComposerElement
+    For Index = 1 To Number
+        Set RandomElement = This.Elements(RndInt(1, This.Elements.Count))
+        Set Shapes = RandomElement.Shapes.Duplicate
+        Set NewElement = ComposerElement.Create(Shapes)
+        ioElements.Add NewElement
+    Next Index
 End Sub
 
 Private Sub ProcessImpositions( _

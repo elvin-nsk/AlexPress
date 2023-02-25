@@ -152,6 +152,7 @@ Public Function MakeImposition( _
          )
         .PlaceCropMarks = True
         .Bleeds = This.Cfg.Bleeds
+        .FillLastPage = True
         .ImposeAutoAddPages
     End With
     
