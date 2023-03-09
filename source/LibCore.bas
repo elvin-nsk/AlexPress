@@ -1,7 +1,7 @@
 Attribute VB_Name = "LibCore"
 '===============================================================================
 '   Модуль          : LibCore
-'   Версия          : 2023.02.16
+'   Версия          : 2023.03.06
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Использован код : dizzy (из макроса CtC), Alex Vakulenko
 '                     и др.
@@ -1657,9 +1657,9 @@ Public Sub RemoveElementFromCollection( _
     Next i
 End Sub
 
-Public Property Get Max(ByRef EnumerableSet As Variant) As Variant
+Public Property Get Max(ByRef Sequence As Variant) As Variant
     Dim Item As Variant
-    For Each Item In EnumerableSet
+    For Each Item In Sequence
         If VBA.IsNumeric(Item) Then
             If Item > Max Then Max = Item
         End If
@@ -1680,9 +1680,9 @@ Public Function MeasureFinish(Optional ByVal Message As String = "")
     Debug.Print Message & VBA.CStr(Round(Timer - StartTime, 3)) & " секунд"
 End Function
 
-Public Property Get Min(ByRef EnumerableSet As Variant) As Variant
+Public Property Get Min(ByRef Sequence As Variant) As Variant
     Dim Item As Variant
-    For Each Item In EnumerableSet
+    For Each Item In Sequence
         If VBA.IsNumeric(Item) Then
             If Item < Min Then
                 Min = Item
@@ -1699,14 +1699,14 @@ Public Property Get MinOfTwo( _
 End Property
 
 Public Property Get Contains( _
-                        ByRef EnumerableSet As Variant, _
+                        ByRef Sequence As Variant, _
                         ByRef Items As Variant _
                     ) As Boolean
     Dim Element As Variant
     Dim Item As Variant
     Dim ItemExists As Boolean
     For Each Item In Items
-        For Each Element In EnumerableSet
+        For Each Element In Sequence
             If IsSame(Item, Element) Then
                 ItemExists = True
                 Exit For
