@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainView 
    Caption         =   "AlexPress"
-   ClientHeight    =   4230
+   ClientHeight    =   4470
    ClientLeft      =   45
    ClientTop       =   375
    ClientWidth     =   7785
@@ -27,8 +27,7 @@ Private Type typeThis
     QuantityOnPressSheet As TextBoxHandler
     PressSheetWidth As TextBoxHandler
     PressSheetHeight As TextBoxHandler
-    ImpositionColumns As TextBoxHandler
-    ImpositionRows As TextBoxHandler
+    PressSheetSpaces As TextBoxHandler
     ImpositionCreated As Boolean
 End Type
 Private This As typeThis
@@ -46,13 +45,11 @@ Private Sub UserForm_Initialize()
         Set This.QuantityOnPressSheet = _
             TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
         Set This.PressSheetWidth = _
-            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeLong, 1)
+            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeDouble, 1)
         Set This.PressSheetHeight = _
-            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeLong, 1)
-        Set This.ImpositionColumns = _
-            TextBoxHandler.Create(ImpositionColumns, TextBoxTypeLong, 1)
-        Set This.ImpositionRows = _
-            TextBoxHandler.Create(ImpositionRows, TextBoxTypeLong, 1)
+            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 1)
+        Set This.PressSheetSpaces = _
+            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 0)
     End With
 End Sub
 
@@ -147,18 +144,8 @@ Private Sub CreateImpositions_Click()
     This.ImpositionCreated = True
 End Sub
 
-Private Sub SwapPressSheetDims_Click()
-    Dim Temp As Long
-    Temp = PressSheetWidth
-    PressSheetWidth = PressSheetHeight
-    PressSheetHeight = Temp
-End Sub
-
-Private Sub SwapRowsAndColumns_Click()
-    Dim Temp As Long
-    Temp = ImpositionColumns
-    ImpositionColumns = ImpositionRows
-    ImpositionRows = Temp
+Private Sub StartNumberSetter_Click()
+    This.Main.NumberSetter
 End Sub
 
 Private Sub App_SelectionChange()
@@ -227,6 +214,8 @@ Private Sub ImpositionCheck()
     If ActiveDocument Is Nothing Then
         DisableMotifControls
         ResetStatus
+        ResetAssignments.Enabled = False
+        CreateImpositions.Enabled = False
         Exit Sub
     End If
     UpdateImpositionState
@@ -262,9 +251,6 @@ Private Sub ImpositionCheck()
             MotifStatusLabel.Caption = vbNullString
         End If
     End If
-    
-    
-
 End Sub
 
 Private Sub CreateMotifIfNothing()

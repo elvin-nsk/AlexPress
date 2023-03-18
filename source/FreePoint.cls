@@ -16,24 +16,24 @@ Implements IPoint
 '===============================================================================
 
 Private Type typeThis
-  X As Double
-  Y As Double
+  x As Double
+  y As Double
   Frozen As Boolean
 End Type
 Private This As typeThis
 
 '===============================================================================
 
-Public Function Create(ByVal X As Double, ByVal Y As Double) As IPoint
+Public Function Create(ByVal x As Double, ByVal y As Double) As IPoint
   With New FreePoint
-    Set Create = .Init(X, Y)
+    Set Create = .Init(x, y)
   End With
 End Function
 
-Friend Function Init(ByVal X As Double, ByVal Y As Double) As IPoint
+Friend Function Init(ByVal x As Double, ByVal y As Double) As IPoint
   With This
-    .X = X
-    .Y = Y
+    .x = x
+    .y = y
   End With
   Set Init = Me
 End Function
@@ -41,7 +41,7 @@ End Function
 '===============================================================================
 
 Private Function IPoint_GetCopy() As IPoint
-  Set IPoint_GetCopy = Create(This.X, This.Y)
+  Set IPoint_GetCopy = Create(This.x, This.y)
 End Function
 
 Private Function IPoint_GetDistanceFrom(ByVal Point As IPoint) As Double
@@ -49,17 +49,17 @@ End Function
 
 Private Sub IPoint_Move(ByVal DeltaX As Double, ByVal DeltaY As Double)
   With This
-    .X = .X + DeltaX
-    .Y = .Y + DeltaY
+    .x = .x + DeltaX
+    .y = .y + DeltaY
   End With
 End Sub
 
 Private Sub IPoint_RotateAroundPoint(ByVal RotationCenter As IPoint, ByVal Angle As Double)
   With RotationCenter
-    This.X = (This.X - .X) * VBA.Cos(DegToRad(Angle)) - _
-             (This.Y - .Y) * VBA.Sin(DegToRad(Angle)) + .X
-    This.Y = (This.X - .X) * VBA.Sin(DegToRad(Angle)) + _
-             (This.Y - .Y) * VBA.Cos(DegToRad(Angle)) + .Y
+    This.x = (This.x - .x) * VBA.Cos(DegToRad(Angle)) - _
+             (This.y - .y) * VBA.Sin(DegToRad(Angle)) + .x
+    This.y = (This.x - .x) * VBA.Sin(DegToRad(Angle)) + _
+             (This.y - .y) * VBA.Cos(DegToRad(Angle)) + .y
   End With
 End Sub
 
@@ -68,17 +68,17 @@ Private Property Get IPoint_Self() As IPoint
 End Property
 
 Private Property Get IPoint_X() As Double
-  IPoint_X = This.X
+  IPoint_X = This.x
 End Property
 Private Property Let IPoint_X(ByVal RHS As Double)
-  This.X = RHS
+  This.x = RHS
 End Property
 
 Private Property Get IPoint_Y() As Double
-  IPoint_Y = This.Y
+  IPoint_Y = This.y
 End Property
 Private Property Let IPoint_Y(ByVal RHS As Double)
-  This.Y = RHS
+  This.y = RHS
 End Property
 
 '===============================================================================

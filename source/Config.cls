@@ -34,8 +34,7 @@ Public PagesToAdd As Long
 
 Public PressSheetWidth As Double
 Public PressSheetHeight As Double
-Public ImpositionColumns As Long
-Public ImpositionRows As Long
+Public PressSheetSpaces As Double
 Public OptionWithBacks As Boolean
 Public OptionNoBacks As Boolean
 
@@ -61,8 +60,7 @@ Private Sub Assign(ByVal Action As iniAction)
         .Section = "Imposition"
         .KeyVar "PressSheetWidth", PressSheetWidth, 320
         .KeyVar "PressSheetHeight", PressSheetHeight, 450
-        .KeyVar "ImpositionColumns", ImpositionColumns, 3
-        .KeyVar "ImpositionRows", ImpositionRows, 4
+        .KeyVar "PressSheetSpaces", PressSheetSpaces, 0
         .KeyVar "OptionWithBacks", OptionWithBacks, True
         .KeyVar "OptionNoBacks", OptionNoBacks, False
     

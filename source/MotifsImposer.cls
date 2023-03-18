@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 '===============================================================================
 '   Модуль          : MotifsImposer
-'   Версия          : 2023.02.25
+'   Версия          : 2023.03.18
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Сайт            : https://github.com/elvin-nsk/LowCoupledFromCore
 '   Назначение      :
@@ -38,7 +38,9 @@ Private Type typeThis
     HorizontalSpace As Double
     MaxPlacesInHeight As Long
     MaxPlacesInWidth As Long
+    MotifsToImport As Variant
     PlaceCropMarks As Boolean
+    PlaceWhiteBackground As Boolean
     ReferencePoint As cdrReferencePoint
     RemainingElements As Collection
     TwoSided As Boolean
@@ -48,6 +50,7 @@ Private This As typeThis
 
 Private Const SIDE_A_MARK As String = "A"
 Private Const SIDE_B_MARK As String = "B"
+Private Const BACKGROUND_MARK As String = "подложка"
 
 Public Event OnImportFile()
 Public Event OnPageImposed()
@@ -72,7 +75,7 @@ Friend Sub Inject( _
         .FillLastPage = False
         .ReferencePoint = cdrCenter
         .TwoSided = TwoSided
-        Set .Elements = ImportAsMarkedElements(Motifs)
+        Set .MotifsToImport = Motifs
     End With
 End Sub
 
@@ -168,6 +171,13 @@ Public Property Let PlaceCropMarks(RHS As Boolean)
     This.PlaceCropMarks = RHS
 End Property
 
+Public Property Get PlaceWhiteBackground() As Boolean
+    PlaceWhiteBackground = This.PlaceWhiteBackground
+End Property
+Public Property Let PlaceWhiteBackground(RHS As Boolean)
+    This.PlaceWhiteBackground = RHS
+End Property
+
 Public Property Get ReferencePoint() As cdrReferencePoint
     ReferencePoint = This.ReferencePoint
 End Property
@@ -199,8 +209,10 @@ Private Sub Impose( _
     
     With This
     
+        Set .Elements = ImportAsMarkedElements(.MotifsToImport)
         Dim Elements As Collection
         Set Elements = .Elements
+        
         Dim Impositions As Collection
         Set Impositions = New Collection
         Dim ImpositionIndex As Long
@@ -210,6 +222,9 @@ Private Sub Impose( _
         Dim ComposedShapes As ShapeRange
         
         Dim ElementsComposer As Composer
+        
+        Dim ImpositionArea As Rect
+        Set ImpositionArea = GetImpositionArea
     
         Do
             ImpositionIndex = ImpositionIndex + 1
@@ -219,14 +234,8 @@ Private Sub Impose( _
                     StartingPoint:=FreePoint.Create(-20000, 20000), _
                     MaxPlacesInWidth:=MaxPlacesInWidth, _
                     MaxPlacesInHeight:=MaxPlacesInHeight, _
-                    MaxWidth:= _
-                        ActivePage.SizeWidth _
-                     - .EdgeMarginLeft _
-                     - .EdgeMarginRight, _
-                    MaxHeight:= _
-                        ActivePage.SizeHeight _
-                     - .EdgeMarginTop _
-                     - .EdgeMarginBottom, _
+                    MaxWidth:=ImpositionArea.Width, _
+                    MaxHeight:=ImpositionArea.Height, _
                     HorizontalSpace:=.HorizontalSpace, _
                     VerticalSpace:=.VerticalSpace _
                 )
@@ -234,7 +243,8 @@ Private Sub Impose( _
             Set ComposedShapes = _
                 ElementsToShapes(ElementsComposer.ComposedElements)
             
-            Set LastPivot = AlignImposition(ComposedShapes, LastPivot)
+            Set LastPivot = _
+                AlignImposition(ComposedShapes, ImpositionArea, LastPivot)
             LastCount = ElementsComposer.ComposedElements.Count
             
             RaiseEvent OnPageImposed
@@ -267,20 +277,29 @@ End Sub
 '===============================================================================
 ' # Helpers
 
+Private Property Get GetImpositionArea() As Rect
+    Set GetImpositionArea = ActivePage.BoundingBox.GetCopy
+    With This
+    GetImpositionArea.Inflate _
+        -.EdgeMarginLeft, -.EdgeMarginTop, -.EdgeMarginRight, -.EdgeMarginBottom
+    End With
+End Property
+
 Private Function AlignImposition( _
                 ByVal ComposedShapes As ShapeRange, _
+                ByVal ImpositionArea As Rect, _
                 ByVal Pivot As IPoint _
             ) As IPoint
     If Pivot Is Nothing Then
-        Align ComposedShapes, ActivePage, This.ReferencePoint
+        Align ComposedShapes, ImpositionArea, This.ReferencePoint
         Set AlignImposition = _
             FreePoint.Create( _
                 ComposedShapes.LeftX, _
                 ComposedShapes.TopY _
             )
     Else
-        ComposedShapes.LeftX = Pivot.X
-        ComposedShapes.TopY = Pivot.Y
+        ComposedShapes.LeftX = Pivot.x
+        ComposedShapes.TopY = Pivot.y
     End If
 End Function
 
@@ -426,14 +445,16 @@ Private Function ImportAsMarkedShapes( _
     Dim ShapeB As Shape
     With Motif
         Set ShapeA = ImportSurface(.SurfaceA)
+        If This.PlaceWhiteBackground Then AddWhiteBackground ShapeA
         ShapeA.Name = SIDE_A_MARK
         ImportAsMarkedShapes.Add ShapeA
         If This.TwoSided Then
             If .HasSurfaceB Then
                 Set ShapeB = ImportSurface(.SurfaceB)
+                If This.PlaceWhiteBackground Then AddWhiteBackground ShapeB
             Else
-                Set ShapeB = ActiveLayer.CreateRectangleRect(ShapeA.BoundingBox)
-                ShapeB.Fill.ApplyUniformFill CreateCMYKColor(0, 0, 0, 0)
+                Set ShapeB = _
+                    DrawWhiteRectangle(ShapeA.Layer, ShapeA.BoundingBox)
             End If
             ShapeB.SetPosition ShapeA.PositionX, ShapeA.PositionY
             ShapeB.Name = SIDE_B_MARK
@@ -458,6 +479,23 @@ End Function
 Private Function ImportSurface(ByVal Surface As Surface) As Shape
     ActiveLayer.Import Surface.File
     Set ImportSurface = ActiveShape
+End Function
+
+Private Sub AddWhiteBackground(ByRef ioShape As Shape)
+    Dim BGShape As Shape
+    Set BGShape = DrawWhiteRectangle(ioShape.Layer, ioShape.BoundingBox)
+    BGShape.Name = BACKGROUND_MARK
+    BGShape.OrderBackOf ioShape
+    Set ioShape = PackShapes(BGShape, ioShape).Group
+End Sub
+
+Private Function DrawWhiteRectangle( _
+                     ByVal Layer As Layer, _
+                     ByVal Box As Rect _
+                 ) As Shape
+    Set DrawWhiteRectangle = Layer.CreateRectangleRect(Box)
+    DrawWhiteRectangle.Fill.ApplyUniformFill CreateCMYKColor(0, 0, 0, 0)
+    DrawWhiteRectangle.Outline.SetNoOutline
 End Function
 
 Private Property Get GetMotifsCopy(ByRef Motifs As Variant) As Collection

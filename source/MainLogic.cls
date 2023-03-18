@@ -63,8 +63,7 @@ Public Function Create( _
         .tbPages.Value = Cfg.PagesToAdd
         .PressSheetWidth = Cfg.PressSheetWidth
         .PressSheetHeight = Cfg.PressSheetHeight
-        .ImpositionColumns = Cfg.ImpositionColumns
-        .ImpositionRows = Cfg.ImpositionRows
+        .PressSheetSpaces = Cfg.PressSheetSpaces
         .OptionWithBacks = Cfg.OptionWithBacks
         .OptionNoBacks = Cfg.OptionNoBacks
     
@@ -131,6 +130,11 @@ Public Function MakeImposition( _
     
     FillCfgFromView View
     
+    ActiveDocument.Unit = cdrMillimeter
+    BoostStart "Подгонка размеров", AlexPress.RELEASE
+        ResizeMotifs Motifs.AsCollection
+    BoostFinish
+    
     Dim TempFiles As Collection
     Set TempFiles = Motifs.ExportToTemp
     Dim Doc As Document
@@ -144,15 +148,27 @@ Public Function MakeImposition( _
     Doc.MasterPage.SizeHeight = This.Cfg.PressSheetHeight
     Doc.Activate
     
+    If RotatePageToMaxFit( _
+           SpaceBox(Doc.MasterPage.BoundingBox, -This.Cfg.PressSheetSpaces), _
+           Motifs.Item(1).SurfaceA.Content.BoundingBox _
+       ) Then
+        SwapOrientation Doc.MasterPage
+    End If
+    
     BoostStart "Спуск", AlexPress.RELEASE
         
     With MotifsImposer.CreateFromImport( _
              Motifs.AsCollection, _
              This.Cfg.OptionWithBacks _
          )
-        .PlaceCropMarks = True
         .Bleeds = This.Cfg.Bleeds
+        .EdgeMarginBottom = This.Cfg.PressSheetSpaces
+        .EdgeMarginLeft = This.Cfg.PressSheetSpaces
+        .EdgeMarginRight = This.Cfg.PressSheetSpaces
+        .EdgeMarginTop = This.Cfg.PressSheetSpaces
         .FillLastPage = True
+        .PlaceCropMarks = True
+        .PlaceWhiteBackground = True
         .ImposeAutoAddPages
     End With
     
@@ -167,8 +183,54 @@ Catch:
     Resume Finally
 End Function
 
+Public Sub NumberSetter()
+
+    If AlexPress.RELEASE Then On Error GoTo Catch
+        
+    Dim Shapes As ShapeRange
+    With InitData.GetShapes(ErrNoSelection:="Выделите текстовые объекты")
+        If .IsError Then Exit Sub
+        Set Shapes = .Shapes.Shapes.FindShapes(Type:=cdrTextShape)
+    End With
+    If Shapes.Count = 0 Then
+        Throw "Среди выделенных объектов нет ни одного текстового"
+    End If
+    
+    Dim Prefix As String
+    Dim StartingNumber As Long
+    With New NumberSetterView
+        .Show
+        If .IsCancel Then Exit Sub
+        Prefix = .Prefix
+        StartingNumber = .StartingNumber
+    End With
+    
+    BoostStart "Расстановка номеров", AlexPress.RELEASE
+    
+    SetNumbers Shapes, Prefix, StartingNumber
+    
+Finally:
+    BoostFinish
+    Exit Sub
+
+Catch:
+    MsgBox "Ошибка: " & Err.Description, vbCritical
+    Resume Finally
+End Sub
+
 '===============================================================================
 ' # Public
+
+Public Property Get RotatePageToMaxFit( _
+                        ByVal ImpositionArea As Rect, _
+                        ByVal Box As Rect _
+                    ) As Boolean
+    Dim NumberAsIs As Long
+    Dim NumberIfRotate As Long
+    NumberAsIs = NumberToFitArea(Box, ImpositionArea)
+    NumberIfRotate = NumberToFitArea(Box, GetRotatedRect(ImpositionArea))
+    RotatePageToMaxFit = NumberIfRotate > NumberAsIs
+End Property
 
 Public Function Dispose(ByVal View As MainView)
     FillCfgFromView View
@@ -200,8 +262,7 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.PagesToAdd = .tbPages.Value
         This.Cfg.PressSheetWidth = .PressSheetWidth
         This.Cfg.PressSheetHeight = .PressSheetHeight
-        This.Cfg.ImpositionColumns = .ImpositionColumns
-        This.Cfg.ImpositionRows = .ImpositionRows
+        This.Cfg.PressSheetSpaces = .PressSheetSpaces
         This.Cfg.OptionWithBacks = .OptionWithBacks
         This.Cfg.OptionNoBacks = .OptionNoBacks
     
@@ -218,8 +279,8 @@ Private Function SetBleeds(ByVal Cfg As Config)
     
     'если округляем размер
     If Cfg.RoundSize Then
-        Width = Round(SrcShape.SizeWidth, Cfg.RoundDec)
-        Height = Round(SrcShape.SizeHeight, Cfg.RoundDec)
+        Width = VBA.Round(SrcShape.SizeWidth, Cfg.RoundDec)
+        Height = VBA.Round(SrcShape.SizeHeight, Cfg.RoundDec)
     Else
         Width = SrcShape.SizeWidth
         Height = SrcShape.SizeHeight
@@ -486,6 +547,55 @@ Private Property Get GetShapesOnPage( _
         End If
     Next Shape
 End Property
+
+Private Sub ResizeMotifs(ByVal Motifs As Collection)
+    Dim Width As Double, Height As Double
+    Dim SrcShape As Shape
+    Set SrcShape = Motifs(1).SurfaceA.Content
+    With This
+        If .Cfg.RoundSize Then
+            Width = VBA.Round(SrcShape.SizeWidth, .Cfg.RoundDec)
+            Height = VBA.Round(SrcShape.SizeHeight, .Cfg.RoundDec)
+        Else
+            Width = SrcShape.SizeWidth
+            Height = SrcShape.SizeHeight
+        End If
+        Dim Motif As Motif
+        For Each Motif In Motifs
+            Motif.SurfaceA.Content.SetSize Width, Height
+            If Motif.HasSurfaceB Then
+                Motif.SurfaceB.Content.SetSize Width, Height
+            End If
+        Next Motif
+    End With
+End Sub
+
+Private Sub SetNumbers( _
+                ByVal Shapes As ShapeRange, _
+                ByVal Prefix As String, _
+                ByVal StartingNumber As Long _
+            )
+    Dim NewShapes As ShapeRange
+    Dim Page As Page
+    For Each Page In ActiveDocument.Pages
+        Set NewShapes = Shapes.Duplicate
+        NewShapes.MoveToLayer Page.ActiveLayer
+        SetNumberingText NewShapes, Prefix, StartingNumber
+    Next Page
+    Shapes.Delete
+End Sub
+
+Private Sub SetNumberingText( _
+                ByVal Shapes As ShapeRange, _
+                ByVal Prefix As String, _
+                ByRef ioNextStartingNumber As Long _
+            )
+    Dim Shape As Shape
+    For Each Shape In Shapes
+        Shape.Text.Story.Text = Prefix & SEPARATOR & ioNextStartingNumber
+        ioNextStartingNumber = ioNextStartingNumber + 1
+    Next Shape
+End Sub
 
 Private Sub DeleteFiles(ByVal Files As Collection)
     Dim File As IFileSpec

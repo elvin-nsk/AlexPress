@@ -123,21 +123,21 @@ End Sub
 Private Sub PlaceElement(ByVal Item As IComposerElement)
     With This
     
-        Item.PivotX = .Cursor.X
-        Item.PivotY = .Cursor.Y
+        Item.PivotX = .Cursor.x
+        Item.PivotY = .Cursor.y
         
         .CurrentRowWidth = .CurrentRowWidth + .HorizontalSpace + Item.Width
         If .CurrentRowHeight < Item.Height Then _
             .CurrentRowHeight = Item.Height
         .CurrentRowItemsInWidth = .CurrentRowItemsInWidth + 1
-        .Cursor.X = .Cursor.X + .HorizontalSpace + Item.Width
+        .Cursor.x = .Cursor.x + .HorizontalSpace + Item.Width
         
     End With
 End Sub
 
 Private Function IsHeightExceeded(ByVal Item As IComposerElement) As Boolean
     With This
-        If (VBA.Abs(.StartingPoint.Y - .Cursor.Y) + Item.Height >= .MaxHeight) _
+        If (VBA.Abs(.StartingPoint.y - .Cursor.y) + Item.Height >= .MaxHeight) _
         Or (.CurrentRowNumber > .MaxPlacesInHeight) Then _
             IsHeightExceeded = True
     End With
@@ -147,8 +147,8 @@ Private Sub BeginNextRowIfNeeded(ByVal Item As IComposerElement)
     With This
         If (.CurrentRowWidth + Item.Width > .MaxWidth) _
         Or (.CurrentRowItemsInWidth = .MaxPlacesInWidth) Then
-            .Cursor.X = .StartingPoint.X
-            .Cursor.Y = .Cursor.Y - .CurrentRowHeight - .VerticalSpace
+            .Cursor.x = .StartingPoint.x
+            .Cursor.y = .Cursor.y - .CurrentRowHeight - .VerticalSpace
             .CurrentRowWidth = 0
             .CurrentRowHeight = 0
             .CurrentRowItemsInWidth = 0

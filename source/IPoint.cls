@@ -13,14 +13,14 @@ Option Explicit
 
 '===============================================================================
 
-Public Property Get X() As Double
+Public Property Get x() As Double
 End Property
-Public Property Let X(ByVal RHS As Double)
+Public Property Let x(ByVal RHS As Double)
 End Property
 
-Public Property Get Y() As Double
+Public Property Get y() As Double
 End Property
-Public Property Let Y(ByVal RHS As Double)
+Public Property Let y(ByVal RHS As Double)
 End Property
 
 Public Function GetDistanceFrom(ByVal Point As IPoint) As Double
