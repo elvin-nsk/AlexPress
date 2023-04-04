@@ -65,6 +65,7 @@ Public Function Create( _
         .PressSheetHeight = Cfg.PressSheetHeight
         .PressSheetSpaces = Cfg.PressSheetSpaces
         .OptionWithBacks = Cfg.OptionWithBacks
+        .OptionMarks = Cfg.OptionMarks
         .OptionNoBacks = Cfg.OptionNoBacks
     
     End With
@@ -167,7 +168,7 @@ Public Function MakeImposition( _
         .EdgeMarginRight = This.Cfg.PressSheetSpaces
         .EdgeMarginTop = This.Cfg.PressSheetSpaces
         .FillLastPage = True
-        .PlaceCropMarks = True
+        .PlaceCropMarks = This.Cfg.OptionMarks
         .PlaceWhiteBackground = True
         .ImposeAutoAddPages
     End With
@@ -264,6 +265,7 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.PressSheetHeight = .PressSheetHeight
         This.Cfg.PressSheetSpaces = .PressSheetSpaces
         This.Cfg.OptionWithBacks = .OptionWithBacks
+        This.Cfg.OptionMarks = .OptionMarks
         This.Cfg.OptionNoBacks = .OptionNoBacks
     
     End With

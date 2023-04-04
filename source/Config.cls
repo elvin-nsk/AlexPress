@@ -36,6 +36,7 @@ Public PressSheetWidth As Double
 Public PressSheetHeight As Double
 Public PressSheetSpaces As Double
 Public OptionWithBacks As Boolean
+Public OptionMarks As Boolean
 Public OptionNoBacks As Boolean
 
 '-------------------------------------------------------------------------------
@@ -62,6 +63,7 @@ Private Sub Assign(ByVal Action As iniAction)
         .KeyVar "PressSheetHeight", PressSheetHeight, 450
         .KeyVar "PressSheetSpaces", PressSheetSpaces, 0
         .KeyVar "OptionWithBacks", OptionWithBacks, True
+        .KeyVar "OptionMarks", OptionMarks, True
         .KeyVar "OptionNoBacks", OptionNoBacks, False
     
     End With
