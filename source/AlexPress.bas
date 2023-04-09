@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.04.04
+'   Версия          : 2023.04.09
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -13,6 +13,9 @@ Public Const RELEASE As Boolean = True
 
 Public Const APP_NAME As String = "AlexPress"
 Public Const SEPARATOR As String = "-"
+Public Const INFO_SIZE As Double = 3.5 'мм
+Public Const INFO_SPACE As Double = 1 'мм
+Public Const INFO_ROUND_DIGITS As Long = 1
 
 '===============================================================================
 

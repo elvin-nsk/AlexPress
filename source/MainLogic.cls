@@ -170,7 +170,10 @@ Public Function MakeImposition( _
         .FillLastPage = True
         .PlaceCropMarks = This.Cfg.OptionMarks
         .PlaceWhiteBackground = True
+        
         .ImposeAutoAddPages
+    
+        PlaceInfoInDoc Doc, .ComposedElements, This.Cfg.OptionWithBacks
     End With
     
     DeleteFiles TempFiles
@@ -598,6 +601,56 @@ Private Sub SetNumberingText( _
         ioNextStartingNumber = ioNextStartingNumber + 1
     Next Shape
 End Sub
+
+Private Sub PlaceInfoInDoc( _
+                ByVal Doc As Document, _
+                ByVal Elements As Collection, _
+                ByVal PlaceOnlyOnOdd As Boolean _
+            )
+    Dim Page As Page
+    For Each Page In Doc.Pages
+        If (Not PlaceOnlyOnOdd) _
+        Or (PlaceOnlyOnOdd And Not IsChet(Page.Index)) Then
+            PlaceInfoOnPage _
+                Page, _
+                FilterElementsByPageIndex(Elements, Page.Index)
+        End If
+    Next Page
+End Sub
+
+Private Sub PlaceInfoOnPage( _
+                ByVal Page As Page, _
+                ByVal Shapes As ShapeRange _
+            )
+    If (Shapes.BottomY - Page.BottomY) < (INFO_SIZE + INFO_SPACE * 2) Then
+        Exit Sub
+    End If
+    Dim Size As Rect
+    Set Size = Shapes.FirstShape.BoundingBox.GetCopy
+    Dim Txt As Shape
+    Set Txt = _
+        Page.ActiveLayer.CreateArtisticText( _
+            0, 0, _
+            VBA.Round(Size.Width, INFO_ROUND_DIGITS) & "x" _
+          & VBA.Round(Size.Height, INFO_ROUND_DIGITS) _
+        )
+    Txt.SetSize , INFO_SIZE
+    Txt.CenterX = Page.CenterX
+    Txt.TopY = Shapes.BottomY - INFO_SPACE
+End Sub
+
+Private Property Get FilterElementsByPageIndex( _
+                         ByVal Elements As Collection, _
+                         ByVal PageIndex As Long _
+                     ) As ShapeRange
+    Dim Element As IComposerElement
+    Set FilterElementsByPageIndex = CreateShapeRange
+    For Each Element In Elements
+        If Element.Shapes.FirstShape.Page.Index = PageIndex Then
+            FilterElementsByPageIndex.AddRange Element.Shapes
+        End If
+    Next Element
+End Property
 
 Private Sub DeleteFiles(ByVal Files As Collection)
     Dim File As IFileSpec

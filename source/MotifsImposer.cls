@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 '===============================================================================
 '   Модуль          : MotifsImposer
-'   Версия          : 2023.03.18
+'   Версия          : 2023.04.09
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Сайт            : https://github.com/elvin-nsk/LowCoupledFromCore
 '   Назначение      :
@@ -71,6 +71,7 @@ Friend Sub Inject( _
                ByVal TwoSided As Boolean _
            )
     With This
+        Set .ComposedElements = New Collection
         .CropMarksLength = 3
         .FillLastPage = False
         .ReferencePoint = cdrCenter
@@ -240,6 +241,7 @@ Private Sub Impose( _
                     VerticalSpace:=.VerticalSpace _
                 )
             
+            AppendCollection .ComposedElements, ElementsComposer.ComposedElements
             Set ComposedShapes = _
                 ElementsToShapes(ElementsComposer.ComposedElements)
             

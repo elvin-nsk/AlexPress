@@ -93,6 +93,7 @@ Private Sub btnAddPages_Click()
 End Sub
 
 Private Sub SetFace_Click()
+    If Not CheckSize Then Exit Sub
     CreateMotifIfNothing
     With This.ActiveMotif
         Set .SurfaceA = New Surface
@@ -112,6 +113,7 @@ Private Sub SetFace_Click()
 End Sub
 
 Private Sub SetBack_Click()
+    If Not CheckSize Then Exit Sub
     CreateMotifIfNothing
     With This.ActiveMotif
         Set .SurfaceB = New Surface
@@ -349,6 +351,29 @@ Private Function AskToClose() As VbMsgBoxResult
           & "Хотите закрыть?", _
             vbOKCancel + vbExclamation _
         )
+End Function
+
+Private Function CheckSize() As Boolean
+    If This.Motifs.Count = 0 Then
+        CheckSize = True
+        Exit Function
+    End If
+    Dim Content As Shape
+    Set Content = This.Motifs.Item(1).SurfaceA.Content
+    Dim Answer As VbMsgBoxResult
+    With ActiveSelectionRange.FirstShape
+        If .SizeWidth = Content.SizeWidth _
+       And .SizeHeight = Content.SizeHeight Then
+            CheckSize = True
+        Else
+            Answer = _
+                VBA.MsgBox( _
+                    "Размер этого макета отличается от размера первого добавленного макета. Продолжить добавление?", _
+                    vbYesNo + vbQuestion, "Несовпадение размера макета" _
+                )
+            If Answer = vbYes Then CheckSize = True
+        End If
+    End With
 End Function
 
 '===============================================================================
