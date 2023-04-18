@@ -42,34 +42,9 @@ Public Function Create( _
     Set Create = New MainLogic
     Dim Cfg As Config
     Set Cfg = Config.Bind
-    
-    With View
-        
-        .BleedsMin = 0.1
-        .BleedsMax = 10000
-        .tbBleeds.Value = VBA.CStr(Cfg.Bleeds)
-        .cbRound.Value = Cfg.RoundSize
-        Select Case Cfg.RoundDec
-            Case 0
-                .obRound0.Value = True
-            Case 1
-                .obRound1.Value = True
-            Case 2
-                .obRound2.Value = True
-        End Select
-        .cbTrim.Value = Cfg.BitmapTrim
-        .tbTrim.Value = Cfg.BitmapTrimSize
-        .cbFlatten.Value = Cfg.BitmapFlatten
-        .tbPages.Value = Cfg.PagesToAdd
-        .PressSheetWidth = Cfg.PressSheetWidth
-        .PressSheetHeight = Cfg.PressSheetHeight
-        .PressSheetSpaces = Cfg.PressSheetSpaces
-        .OptionWithBacks = Cfg.OptionWithBacks
-        .OptionMarks = Cfg.OptionMarks
-        .OptionNoBacks = Cfg.OptionNoBacks
-    
-    End With
-    
+    FillViewFromCfg View, Cfg
+    View.BleedsMin = 0.1
+    View.BleedsMax = 10000
     Create.Inject Cfg
 End Function
 
@@ -167,13 +142,17 @@ Public Function MakeImposition( _
         .EdgeMarginLeft = This.Cfg.PressSheetSpaces
         .EdgeMarginRight = This.Cfg.PressSheetSpaces
         .EdgeMarginTop = This.Cfg.PressSheetSpaces
+        .HorizontalSpace = This.Cfg.MotifsSpaces
+        .VerticalSpace = This.Cfg.MotifsSpaces
+        
         .FillLastPage = True
-        .PlaceCropMarks = This.Cfg.OptionMarks
+        .PlaceCropMarks = This.Cfg.OptionCutmarks
         .PlaceWhiteBackground = True
         
         .ImposeAutoAddPages
-    
-        PlaceInfoInDoc Doc, .ComposedElements, This.Cfg.OptionWithBacks
+        
+        PlaceInfoInDoc Doc, .ComposedShapesByPage, This.Cfg.OptionWithBacks
+        If This.Cfg.OptionRastr Then RasterizeImpositionRanges .ComposedShapesByPage
     End With
     
     DeleteFiles TempFiles
@@ -247,9 +226,42 @@ End Property
 '===============================================================================
 ' # Helpers
 
-Private Sub FillCfgFromView(ByVal View As MainView)
+Private Function FillViewFromCfg( _
+                     ByVal View As MainView, _
+                     ByVal Cfg As Config _
+                 )
     With View
         
+        .tbBleeds.Value = VBA.CStr(Cfg.Bleeds)
+        .cbRound.Value = Cfg.RoundSize
+        Select Case Cfg.RoundDec
+            Case 0
+                .obRound0.Value = True
+            Case 1
+                .obRound1.Value = True
+            Case 2
+                .obRound2.Value = True
+        End Select
+        .cbTrim.Value = Cfg.BitmapTrim
+        .tbTrim.Value = Cfg.BitmapTrimSize
+        .cbFlatten.Value = Cfg.BitmapFlatten
+        .tbPages.Value = Cfg.PagesToAdd
+        .MotifsSpaces = Cfg.MotifsSpaces
+        .OptionCutmarks = Cfg.OptionCutmarks
+        .OptionNoBacks = Cfg.OptionNoBacks
+        .OptionPlotter = Cfg.OptionPlotter
+        .OptionRastr = Cfg.OptionRastr
+        .OptionWithBacks = Cfg.OptionWithBacks
+        .PressSheetWidth = Cfg.PressSheetWidth
+        .PressSheetHeight = Cfg.PressSheetHeight
+        .PressSheetSpaces = Cfg.PressSheetSpaces
+        
+    End With
+End Function
+
+Private Sub FillCfgFromView(ByVal View As MainView)
+    With View
+    
         This.Cfg.Bleeds = VBA.CDbl(.tbBleeds.Value)
         This.Cfg.RoundSize = .cbRound.Value
         Select Case True
@@ -264,13 +276,16 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.BitmapTrimSize = .tbTrim.Value
         This.Cfg.BitmapFlatten = .cbFlatten.Value
         This.Cfg.PagesToAdd = .tbPages.Value
+        This.Cfg.MotifsSpaces = .MotifsSpaces
+        This.Cfg.OptionCutmarks = .OptionCutmarks
+        This.Cfg.OptionNoBacks = .OptionNoBacks
+        This.Cfg.OptionPlotter = .OptionPlotter
+        This.Cfg.OptionRastr = .OptionRastr
+        This.Cfg.OptionWithBacks = .OptionWithBacks
         This.Cfg.PressSheetWidth = .PressSheetWidth
         This.Cfg.PressSheetHeight = .PressSheetHeight
         This.Cfg.PressSheetSpaces = .PressSheetSpaces
-        This.Cfg.OptionWithBacks = .OptionWithBacks
-        This.Cfg.OptionMarks = .OptionMarks
-        This.Cfg.OptionNoBacks = .OptionNoBacks
-    
+        
     End With
 End Sub
 
@@ -604,52 +619,154 @@ End Sub
 
 Private Sub PlaceInfoInDoc( _
                 ByVal Doc As Document, _
-                ByVal Elements As Collection, _
+                ByVal ImpositionRanges As Collection, _
                 ByVal PlaceOnlyOnOdd As Boolean _
             )
     Dim Page As Page
     For Each Page In Doc.Pages
-        If (Not PlaceOnlyOnOdd) _
-        Or (PlaceOnlyOnOdd And Not IsChet(Page.Index)) Then
-            PlaceInfoOnPage _
-                Page, _
-                FilterElementsByPageIndex(Elements, Page.Index)
-        End If
+        TryPlaceInfoOnPage Page, ImpositionRanges, PlaceOnlyOnOdd
     Next Page
 End Sub
 
-Private Sub PlaceInfoOnPage( _
+Private Sub TryPlaceInfoOnPage( _
                 ByVal Page As Page, _
-                ByVal Shapes As ShapeRange _
+                ByVal ImpositionRanges As Collection, _
+                ByVal PlaceOnlyOnOdd As Boolean _
             )
-    If (Shapes.BottomY - Page.BottomY) < (INFO_SIZE + INFO_SPACE * 2) Then
+    If PlaceOnlyOnOdd And IsChet(Page.Index) Then Exit Sub
+    Dim Content As ShapeRange
+    Set Content = FilterRangesByPageIndex(ImpositionRanges, Page.Index)
+    If (Content.BottomY - Page.BottomY) < (INFO_SIZE + INFO_SPACE * 2) Then _
         Exit Sub
+    PlaceSizeInfoOnPage Page, Content
+    PlaceImpositionInfoOnPage Page, Content
+    If This.Cfg.OptionPlotter Then
+        If This.Cfg.PressSheetSpaces _
+        >= (PLOTTER_MARK_DIAMETER + INFO_SPACE * 2) Then
+            PlacePlotterMarksOnPage Page, Content
+        End If
     End If
-    Dim Size As Rect
-    Set Size = Shapes.FirstShape.BoundingBox.GetCopy
-    Dim Txt As Shape
-    Set Txt = _
-        Page.ActiveLayer.CreateArtisticText( _
-            0, 0, _
-            VBA.Round(Size.Width, INFO_ROUND_DIGITS) & "x" _
-          & VBA.Round(Size.Height, INFO_ROUND_DIGITS) _
-        )
-    Txt.SetSize , INFO_SIZE
-    Txt.CenterX = Page.CenterX
-    Txt.TopY = Shapes.BottomY - INFO_SPACE
 End Sub
 
-Private Property Get FilterElementsByPageIndex( _
-                         ByVal Elements As Collection, _
+Private Sub PlaceSizeInfoOnPage( _
+                ByVal Page As Page, _
+                ByVal Content As ShapeRange _
+            )
+    Dim Shape As Shape
+    Set Shape = Content.Shapes.First
+    Dim Txt As Shape
+    Set Txt = _
+        InfoStringToShape( _
+            VBA.Round(Shape.SizeWidth, INFO_ROUND_DIGITS) & "x" _
+          & VBA.Round(Shape.SizeHeight, INFO_ROUND_DIGITS), _
+            Page.ActiveLayer _
+        )
+    Txt.CenterX = Page.CenterX
+    Txt.TopY = Content.BottomY - INFO_SPACE
+End Sub
+
+Private Sub PlaceImpositionInfoOnPage( _
+                ByVal Page As Page, _
+                ByVal Content As ShapeRange _
+            )
+    Dim Txt As Shape
+    Set Txt = _
+        InfoStringToShape( _
+            IMPOSITION_PREFIX & VBA.Fix(Page.Index / 2) + 1, _
+            Page.ActiveLayer _
+        )
+    Txt.Rotate 90
+    Txt.CenterY = Page.CenterY
+    Txt.LeftX = Content.RightX + INFO_SPACE
+End Sub
+
+Private Sub PlacePlotterMarksOnPage( _
+                ByVal Page As Page, _
+                ByVal Content As ShapeRange _
+            )
+    Dim HSpace As Double
+    HSpace = (Page.SizeWidth - Content.SizeWidth) / 4
+    Dim VSpace As Double
+    VSpace = (Page.SizeHeight - Content.SizeHeight) / 4
+    PlacePlotterMark _
+        Page.ActiveLayer, _
+        Page.LeftX + HSpace, _
+        Page.TopY - VSpace
+    PlacePlotterMark _
+        Page.ActiveLayer, _
+        Page.RightX - HSpace, _
+        Page.TopY - VSpace
+    PlacePlotterMark _
+        Page.ActiveLayer, _
+        Page.LeftX + HSpace, _
+        Page.BottomY + VSpace
+    PlacePlotterMark _
+        Page.ActiveLayer, _
+        Page.RightX - HSpace, _
+        Page.BottomY + VSpace
+End Sub
+
+Private Function InfoStringToShape( _
+                     ByVal Text As String, _
+                     ByVal Layer As Layer _
+                 ) As Shape
+    Set InfoStringToShape = Layer.CreateArtisticText(0, 0, Text)
+    InfoStringToShape.SetSize , INFO_SIZE
+End Function
+
+Private Function PlacePlotterMark( _
+                     ByVal Layer As Layer, _
+                     ByVal x As Double, ByVal y As Double _
+                 ) As Shape
+    Set PlacePlotterMark = _
+        Layer.CreateEllipse2(x, y, PLOTTER_MARK_DIAMETER / 2)
+    PlacePlotterMark.Outline.SetNoOutline
+    PlacePlotterMark.Fill.ApplyUniformFill CreateColor(PLOTTER_MARK_COLOR)
+End Function
+
+Private Sub RasterizeImpositionRanges(ByVal ImpositionRanges As Collection)
+    Dim Range As ShapeRange
+    Dim RasterizedRange As ShapeRange
+    Dim Shape As Shape
+    For Each Range In ImpositionRanges
+        Set RasterizedRange = CreateShapeRange
+        For Each Shape In Range
+            RasterizedRange.Add RasterizeShape(Shape)
+        Next Shape
+        Range.RemoveAll
+        Range.AddRange RasterizedRange
+    Next Range
+End Sub
+
+Private Function RasterizeShape(ByVal Shape As Shape) As Shape
+    Dim Size As Rect
+    With Shape
+        .Layer.Activate
+        Set Size = .BoundingBox.GetCopy
+        .PixelAlignedRendering = True
+        Set RasterizeShape = _
+            .ConvertToBitmapEx( _
+                Mode:=cdrCMYKColorImage, _
+                Dithered:=False, _
+                Transparent:=False, _
+                Resolution:=RASTR_RESOLUTION, _
+                AntiAliasing:=cdrNormalAntiAliasing, _
+                UseColorProfile:=True _
+            )
+    End With
+End Function
+
+Private Property Get FilterRangesByPageIndex( _
+                         ByVal ImpositionRanges As Collection, _
                          ByVal PageIndex As Long _
                      ) As ShapeRange
-    Dim Element As IComposerElement
-    Set FilterElementsByPageIndex = CreateShapeRange
-    For Each Element In Elements
-        If Element.Shapes.FirstShape.Page.Index = PageIndex Then
-            FilterElementsByPageIndex.AddRange Element.Shapes
+    Dim Range As ShapeRange
+    Set FilterRangesByPageIndex = CreateShapeRange
+    For Each Range In ImpositionRanges
+        If Range.FirstShape.Page.Index = PageIndex Then
+            FilterRangesByPageIndex.AddRange Range
         End If
-    Next Element
+    Next Range
 End Property
 
 Private Sub DeleteFiles(ByVal Files As Collection)

@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.04.09
+'   Версия          : 2023.04.18
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -16,6 +16,10 @@ Public Const SEPARATOR As String = "-"
 Public Const INFO_SIZE As Double = 3.5 'мм
 Public Const INFO_SPACE As Double = 1 'мм
 Public Const INFO_ROUND_DIGITS As Long = 1
+Public Const IMPOSITION_PREFIX As String = "Спуск "
+Public Const PLOTTER_MARK_COLOR As String = "CMYK,USER,0,0,0,100"
+Public Const PLOTTER_MARK_DIAMETER As Double = 6
+Public Const RASTR_RESOLUTION As Long = 300
 
 '===============================================================================
 
@@ -73,10 +77,25 @@ Private Sub TestImposer()
         .EdgeMarginTop = 30
         
         .ImposeAutoAddPages
+        
+        Show .ComposedShapesByPage.Count
+        MarkComposedShapes .ComposedShapesByPage
     End With
     
     BoostFinish True
 
+End Sub
+
+Private Sub MarkComposedShapes(ByVal ComposedShapes As Collection)
+    Dim s As Shape
+    Dim i As Long
+    Dim a As Double
+    For i = 1 To ComposedShapes.Count
+        If IsChet(i) Then a = 10 Else a = -10
+        For Each s In ComposedShapes(i)
+            s.Rotate a
+        Next s
+    Next i
 End Sub
 
 Private Sub TestMarks()

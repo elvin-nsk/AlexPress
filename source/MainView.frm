@@ -1,10 +1,10 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainView 
    Caption         =   "AlexPress"
-   ClientHeight    =   4470
+   ClientHeight    =   4920
    ClientLeft      =   45
    ClientTop       =   375
-   ClientWidth     =   7785
+   ClientWidth     =   7755
    OleObjectBlob   =   "MainView.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
@@ -13,6 +13,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 Option Explicit
 
 '===============================================================================
@@ -24,32 +25,35 @@ Private Type typeThis
     Main As MainLogic
     Motifs As MotifsCollector
     ActiveMotif As Motif
-    QuantityOnPressSheet As TextBoxHandler
+    ImpositionCreated As Boolean
+    MotifsSpaces As TextBoxHandler
     PressSheetWidth As TextBoxHandler
     PressSheetHeight As TextBoxHandler
     PressSheetSpaces As TextBoxHandler
-    ImpositionCreated As Boolean
+    QuantityOnPressSheet As TextBoxHandler
 End Type
 Private This As typeThis
 
-Private WithEvents App As Application
-Attribute App.VB_VarHelpID = -1
+Private WithEvents Host As Application
+Attribute Host.VB_VarHelpID = -1
 
 '===============================================================================
 
 Private Sub UserForm_Initialize()
-    Set App = Application
+    Set Host = Application
     Set This.Motifs = New MotifsCollector
     Set This.Main = MainLogic.Create(Me)
     With This
-        Set This.QuantityOnPressSheet = _
-            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
+        Set This.MotifsSpaces = _
+            TextBoxHandler.Create(MotifsSpaces, TextBoxTypeDouble, 0)
         Set This.PressSheetWidth = _
             TextBoxHandler.Create(PressSheetWidth, TextBoxTypeDouble, 1)
         Set This.PressSheetHeight = _
             TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 1)
         Set This.PressSheetSpaces = _
-            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 0)
+            TextBoxHandler.Create(PressSheetSpaces, TextBoxTypeDouble, 0)
+        Set This.QuantityOnPressSheet = _
+            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
     End With
 End Sub
 
@@ -150,7 +154,7 @@ Private Sub StartNumberSetter_Click()
     This.Main.NumberSetter
 End Sub
 
-Private Sub App_SelectionChange()
+Private Sub Host_SelectionChange()
     CheckControls
 End Sub
 

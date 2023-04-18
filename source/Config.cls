@@ -25,19 +25,23 @@ Private Const iniFileName As String = "elvin_" & APP_NAME & ".ini"
 '===============================================================================
 
 Public Bleeds As Double
-Public RoundSize As Boolean
-Public RoundDec As Long
 Public BitmapTrim As Boolean
 Public BitmapTrimSize As Long
 Public BitmapFlatten As Boolean
+Public RoundSize As Boolean
+Public RoundDec As Long
+
 Public PagesToAdd As Long
 
-Public PressSheetWidth As Double
+Public MotifsSpaces As Double
+Public OptionCutmarks As Boolean
+Public OptionNoBacks As Boolean
+Public OptionPlotter As Boolean
+Public OptionRastr As Boolean
+Public OptionWithBacks As Boolean
 Public PressSheetHeight As Double
 Public PressSheetSpaces As Double
-Public OptionWithBacks As Boolean
-Public OptionMarks As Boolean
-Public OptionNoBacks As Boolean
+Public PressSheetWidth As Double
 
 '-------------------------------------------------------------------------------
 
@@ -49,22 +53,25 @@ Private Sub Assign(ByVal Action As iniAction)
         
         .Section = "Bleeds"
         .KeyVar "Bleeds", Bleeds, 3
-        .KeyVar "RoundSize", RoundSize, True
-        .KeyVar "RoundDec", RoundDec, 0
         .KeyVar "BitmapTrim", BitmapTrim, True
         .KeyVar "BitmapTrimSize", BitmapTrimSize, 2
         .KeyVar "BitmapFlatten", BitmapFlatten, False
+        .KeyVar "RoundSize", RoundSize, True
+        .KeyVar "RoundDec", RoundDec, 0
         
         .Section = "Pages"
         .KeyVar "PagesToAdd", PagesToAdd, 1
         
         .Section = "Imposition"
-        .KeyVar "PressSheetWidth", PressSheetWidth, 320
+        .KeyVar "MotifsSpaces", MotifsSpaces, 0
+        .KeyVar "OptionCutmarks", OptionCutmarks, True
+        .KeyVar "OptionNoBacks", OptionNoBacks, False
+        .KeyVar "OptionPlotter", OptionPlotter, False
+        .KeyVar "OptionRastr", OptionRastr, False
+        .KeyVar "OptionWithBacks", OptionWithBacks, True
         .KeyVar "PressSheetHeight", PressSheetHeight, 450
         .KeyVar "PressSheetSpaces", PressSheetSpaces, 0
-        .KeyVar "OptionWithBacks", OptionWithBacks, True
-        .KeyVar "OptionMarks", OptionMarks, True
-        .KeyVar "OptionNoBacks", OptionNoBacks, False
+        .KeyVar "PressSheetWidth", PressSheetWidth, 320
     
     End With
     
