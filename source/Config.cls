@@ -43,6 +43,8 @@ Public PressSheetHeight As Double
 Public PressSheetSpaces As Double
 Public PressSheetWidth As Double
 
+Public StickerSpace As Double
+
 '-------------------------------------------------------------------------------
 
 Private Sub Assign(ByVal Action As iniAction)
@@ -72,6 +74,9 @@ Private Sub Assign(ByVal Action As iniAction)
         .KeyVar "PressSheetHeight", PressSheetHeight, 450
         .KeyVar "PressSheetSpaces", PressSheetSpaces, 0
         .KeyVar "PressSheetWidth", PressSheetWidth, 320
+        
+        .Section = "Sticker"
+        .KeyVar "StickerSpace", StickerSpace, 3
     
     End With
     

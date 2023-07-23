@@ -78,6 +78,45 @@ Catch:
     Resume Finally
 End Function
 
+Public Sub AddMarksAndSeparate(ByVal View As MainView)
+
+    If AlexPress.RELEASE Then On Error GoTo Catch
+    
+    FillCfgFromView View
+    
+    Dim Palette As Palette
+    Set Palette = PaletteManager.GetPalette(PALETTE_NAME)
+    If Palette Is Nothing Then
+        VBA.MsgBox "Не найдена палитра " & PALETTE_NAME, vbCritical
+        Exit Sub
+    End If
+    
+    BoostStart "Добавление меток для стикеров", AlexPress.RELEASE
+    
+    Dim SourceDoc As Document
+    Set SourceDoc = ActiveDocument
+    SourceDoc.Unit = cdrMillimeter
+    With New Sticker
+        .SetMainColors _
+            FindColor(PALETTE_NAME, CUT_COLOR_NAME), _
+            FindColor(PALETTE_NAME, PERFCUT_COLOR_NAME), _
+            FindColor(PALETTE_NAME, WHITE_COLOR_NAME)
+        .SetDistance This.Cfg.StickerSpace
+        .Separate ActivePage.Shapes.All
+        .GetCutDoc.Name = "Резка - " & SourceDoc.Name
+        .GetPrintDoc.Name = "Печать - " & SourceDoc.Name
+    End With
+    SourceDoc.Activate
+    
+Finally:
+    BoostFinish
+    Exit Sub
+
+Catch:
+    MsgBox "Ошибка: " & Err.Description, vbCritical
+    Resume Finally
+End Sub
+
 Public Function AddPages(ByVal View As MainView)
 
     If AlexPress.RELEASE Then On Error GoTo Catch
@@ -255,6 +294,7 @@ Private Function FillViewFromCfg( _
         .PressSheetWidth = Cfg.PressSheetWidth
         .PressSheetHeight = Cfg.PressSheetHeight
         .PressSheetSpaces = Cfg.PressSheetSpaces
+        .StickerSpace = Cfg.StickerSpace
         
     End With
 End Function
@@ -285,6 +325,7 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.PressSheetWidth = .PressSheetWidth
         This.Cfg.PressSheetHeight = .PressSheetHeight
         This.Cfg.PressSheetSpaces = .PressSheetSpaces
+        This.Cfg.StickerSpace = .StickerSpace
         
     End With
 End Sub

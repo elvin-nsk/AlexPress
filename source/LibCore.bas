@@ -1,7 +1,7 @@
 Attribute VB_Name = "LibCore"
 '===============================================================================
 '   Модуль          : LibCore
-'   Версия          : 2023.03.18
+'   Версия          : 2023.07.23
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Использован код : dizzy (из макроса CtC), Alex Vakulenko
 '                     и др.
@@ -81,6 +81,35 @@ Public Property Get FindAllShapes( _
     End If
 End Property
 
+Public Property Get FindColor( _
+                        ByVal PaletteName As String, _
+                        ByVal ColorName As String _
+                    ) As Color
+    Dim Palette As Palette
+    Set Palette = PaletteManager.GetPalette(PaletteName)
+    If Palette Is Nothing Then Exit Property
+    Dim Index As Long
+    Index = Palette.FindColor(ColorName)
+    If Index = 0 Then Exit Property
+    Set FindColor = Palette.Color(Index)
+End Property
+
+Public Property Get FindShapesByFillColor( _
+                        ByVal Shapes As ShapeRange, _
+                        ByVal Color As Color _
+                    ) As ShapeRange
+    Dim Result As New ShapeRange
+    Dim Shape As Shape
+    For Each Shape In FindAllShapes(Shapes)
+        If Shape.Fill.Type = cdrUniformFill Then
+            If Shape.Fill.UniformColor.IsSame(Color) Then
+                Result.Add Shape
+            End If
+        End If
+    Next Shape
+    Set FindShapesByFillColor = Result
+End Property
+
 'находит все шейпы с данным именем, включая шейпы в поверклипах, с рекурсией
 Public Property Get FindShapesByName( _
                         ByVal Shapes As ShapeRange, _
@@ -115,6 +144,22 @@ Public Property Get FindShapesByNamePart( _
     Set FindShapesByNamePart = FindAllShapes(Shapes).Shapes.FindShapes( _
                                    Query:="@Name.Contains('" & NamePart & "')" _
                                )
+End Property
+
+Public Property Get FindShapesByOutlineColor( _
+                        ByVal Shapes As ShapeRange, _
+                        ByVal Color As Color _
+                    ) As ShapeRange
+    Dim Result As New ShapeRange
+    Dim Shape As Shape
+    For Each Shape In FindAllShapes(Shapes)
+        If Shape.Outline.Type = cdrOutline Then
+            If Shape.Outline.Color.IsSame(Color) Then
+                Result.Add Shape
+            End If
+        End If
+    Next Shape
+    Set FindShapesByOutlineColor = Result
 End Property
 
 'находит поверклипы, без рекурсии

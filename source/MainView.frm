@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainView 
    Caption         =   "AlexPress"
-   ClientHeight    =   4920
+   ClientHeight    =   5520
    ClientLeft      =   45
    ClientTop       =   375
    ClientWidth     =   7755
@@ -30,6 +30,7 @@ Private Type typeThis
     PressSheetWidth As TextBoxHandler
     PressSheetHeight As TextBoxHandler
     PressSheetSpaces As TextBoxHandler
+    StickerSpace As TextBoxHandler
     QuantityOnPressSheet As TextBoxHandler
 End Type
 Private This As typeThis
@@ -52,6 +53,8 @@ Private Sub UserForm_Initialize()
             TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 1)
         Set This.PressSheetSpaces = _
             TextBoxHandler.Create(PressSheetSpaces, TextBoxTypeDouble, 0)
+        Set This.StickerSpace = _
+            TextBoxHandler.Create(StickerSpace, TextBoxTypeDouble, 0)
         Set This.QuantityOnPressSheet = _
             TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
     End With
@@ -152,6 +155,10 @@ End Sub
 
 Private Sub StartNumberSetter_Click()
     This.Main.NumberSetter
+End Sub
+
+Private Sub StickerRun_Click()
+    This.Main.AddMarksAndSeparate Me
 End Sub
 
 Private Sub Host_SelectionChange()

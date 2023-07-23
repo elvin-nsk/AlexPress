@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.04.18
+'   Версия          : 2023.07.23
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -20,6 +20,11 @@ Public Const IMPOSITION_PREFIX As String = "Спуск "
 Public Const PLOTTER_MARK_COLOR As String = "CMYK,USER,0,0,0,100"
 Public Const PLOTTER_MARK_DIAMETER As Double = 6
 Public Const RASTR_RESOLUTION As Long = 300
+
+Public Const PALETTE_NAME As String = "Summa2"
+Public Const CUT_COLOR_NAME As String = "CutContour"
+Public Const PERFCUT_COLOR_NAME As String = "CutContour Perfcut"
+Public Const WHITE_COLOR_NAME As String = "White"
 
 '===============================================================================
 
@@ -112,4 +117,29 @@ End Sub
 Private Sub TestOther()
     'ActiveDocument.Unit = cdrMillimeter
     Show ActiveSelectionRange.FirstShape.BoundingBox.Width
+End Sub
+
+Private Sub TestSticker()
+    ActiveDocument.Unit = cdrMillimeter
+    With New Sticker
+        .SetMainColors _
+            FindColor("Summa2", "CutContour"), _
+            FindColor("Summa2", "CutContour Perfcut"), _
+            FindColor("Summa2", "White")
+        .SetDistance 3
+        .Separate ActivePage.Shapes.All
+    End With
+End Sub
+
+Private Sub TestPalette()
+    Dim Palette As Palette
+    Set Palette = PaletteManager.GetPalette("Summa2")
+    Dim Color As Color
+    For Each Color In Palette.Colors
+        Debug.Print Color.Name
+    Next Color
+End Sub
+
+Private Sub TestFindColor()
+    Debug.Print FindColor("Summa2", "CutContour Perfcut").Tint
 End Sub
