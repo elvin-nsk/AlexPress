@@ -14,11 +14,12 @@ Option Explicit
 
 Private Type typeThis
     CutColor As Color
-    CutDoc As Document
     Distance As Double
     MarksColor As Color
     PerfcutColor As Color
-    PrintDoc As Document
+    SeparationsShift As Double
+    ShapesToCut As ShapeRange
+    ShapesToPrint As ShapeRange
     TargetCutColor As Color
     TargetPerfcutColor As Color
     WhiteColor As Color
@@ -40,6 +41,7 @@ Private Sub Class_Initialize()
         Set .TargetCutColor = CreateCMYKColor(0, 0, 0, 100)
         Set .TargetPerfcutColor = CreateRGBColor(255, 0, 0)
         Set .MarksColor = CreateCMYKColor(0, 0, 0, 100)
+        .SeparationsShift = 10
     End With
 End Sub
 
@@ -50,12 +52,12 @@ End Sub
 '===============================================================================
 ' # Public
 
-Public Property Get GetCutDoc() As Document
-    Set GetCutDoc = This.CutDoc
+Public Property Get GetShapesToCut() As ShapeRange
+    Set GetShapesToCut = This.ShapesToCut
 End Property
 
-Public Property Get GetPrintDoc() As Document
-    Set GetPrintDoc = This.PrintDoc
+Public Property Get GetShapesToPrint() As ShapeRange
+    Set GetShapesToPrint = This.ShapesToPrint
 End Property
 
 Public Sub Separate(ByVal Shapes As ShapeRange)
@@ -94,18 +96,25 @@ Public Sub Separate(ByVal Shapes As ShapeRange)
     ToPrint.AddRange AllShapes
     ToPrint.RemoveRange CutShapes
     ToPrint.RemoveRange PerfcutShapes
-    Set This.PrintDoc = ToPrint.CreateDocumentFrom
     
     Dim ToCut As New ShapeRange
     ToCut.AddRange CutShapes
     ToCut.AddRange PerfcutShapes
     ToCut.Add BlackMarks
-    Set This.CutDoc = ToCut.CreateDocumentFrom
-    
-    FindCutShapes(This.CutDoc.ActivePage.Shapes.All) _
-        .SetOutlineProperties Color:=This.TargetCutColor
-    FindPerfcutShapes(This.CutDoc.ActivePage.Shapes.All) _
-        .SetOutlineProperties Color:=This.TargetPerfcutColor
+    FindCutShapes(ToCut).SetOutlineProperties Color:=This.TargetCutColor
+    FindPerfcutShapes(ToCut).SetOutlineProperties Color:=This.TargetPerfcutColor
+        
+    With This
+        Set .ShapesToPrint = ToPrint.Duplicate
+        Set .ShapesToCut = ToCut.Duplicate
+        .ShapesToCut.Move _
+            0, _
+            -( _
+                AverageDim(.ShapesToCut) * (.SeparationsShift / 100) _
+                + .ShapesToCut.SizeHeight _
+            )
+        AllShapes.Delete
+    End With
 
 End Sub
 
@@ -126,6 +135,10 @@ Public Sub SetMainColors( _
         Set .WhiteColor = CreateColor
         .WhiteColor.CopyAssign WhiteColor
     End With
+End Sub
+
+Public Sub SetSeparationsShift(ByVal SeparationsShift As Double)
+    This.SeparationsShift = SeparationsShift
 End Sub
 
 Public Property Get Self() As Sticker

@@ -363,5 +363,3 @@ Err_ManageSectionEntry:
     Resume Exit_Clean
 
 End Function
-
-

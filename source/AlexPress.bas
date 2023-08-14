@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.07.23
+'   Версия          : 2023.08.14
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -12,6 +12,7 @@ Option Explicit
 Public Const RELEASE As Boolean = True
 
 Public Const APP_NAME As String = "AlexPress"
+
 Public Const SEPARATOR As String = "-"
 Public Const INFO_SIZE As Double = 3.5 'мм
 Public Const INFO_SPACE As Double = 1 'мм
@@ -21,10 +22,11 @@ Public Const PLOTTER_MARK_COLOR As String = "CMYK,USER,0,0,0,100"
 Public Const PLOTTER_MARK_DIAMETER As Double = 6
 Public Const RASTR_RESOLUTION As Long = 300
 
-Public Const PALETTE_NAME As String = "Summa2"
+'к функции MainLogic.AddMarksAndSeparate
 Public Const CUT_COLOR_NAME As String = "CutContour"
 Public Const PERFCUT_COLOR_NAME As String = "CutContour Perfcut"
 Public Const WHITE_COLOR_NAME As String = "White"
+Public Const SEPARATIONS_SHIFT As Double = 25 'процентов от размера
 
 '===============================================================================
 

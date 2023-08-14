@@ -78,35 +78,44 @@ Catch:
     Resume Finally
 End Function
 
+'функция для кнопки Стикеры - Метки и разделения
 Public Sub AddMarksAndSeparate(ByVal View As MainView)
 
     If AlexPress.RELEASE Then On Error GoTo Catch
     
-    FillCfgFromView View
+    Dim Shapes As ShapeRange
+    With InputData.RequestShapes
+        If .IsError Then Exit Sub
+        Set Shapes = .Shapes
+    End With
     
-    Dim Palette As Palette
-    Set Palette = PaletteManager.GetPalette(PALETTE_NAME)
-    If Palette Is Nothing Then
-        VBA.MsgBox "Не найдена палитра " & PALETTE_NAME, vbCritical
+    Dim ColorCol As Collection
+    Set ColorCol = GetBoundColors(FindAllShapes(Shapes))
+    Dim CutColor As Color
+    Set CutColor = FindSpotColorInCol(ColorCol, CUT_COLOR_NAME)
+    Dim PerfcutColor As Color
+    Set PerfcutColor = FindSpotColorInCol(ColorCol, PERFCUT_COLOR_NAME)
+    Dim WhiteColor As Color
+    Set WhiteColor = FindSpotColorInCol(ColorCol, WHITE_COLOR_NAME)
+    If NotifyIfColorIsNothing(CutColor, CUT_COLOR_NAME) _
+    Or NotifyIfColorIsNothing(PerfcutColor, PERFCUT_COLOR_NAME) _
+    Or NotifyIfColorIsNothing(WhiteColor, WHITE_COLOR_NAME) Then
         Exit Sub
     End If
     
-    BoostStart "Добавление меток для стикеров", AlexPress.RELEASE
+    FillCfgFromView View
     
-    Dim SourceDoc As Document
-    Set SourceDoc = ActiveDocument
-    SourceDoc.Unit = cdrMillimeter
+    BoostStart "Добавление меток для стикеров", AlexPress.RELEASE
+
+    ActiveDocument.Unit = cdrMillimeter
     With New Sticker
-        .SetMainColors _
-            FindColor(PALETTE_NAME, CUT_COLOR_NAME), _
-            FindColor(PALETTE_NAME, PERFCUT_COLOR_NAME), _
-            FindColor(PALETTE_NAME, WHITE_COLOR_NAME)
+        .SetMainColors CutColor, PerfcutColor, WhiteColor
         .SetDistance This.Cfg.StickerSpace
-        .Separate ActivePage.Shapes.All
-        .GetCutDoc.Name = "Резка - " & SourceDoc.Name
-        .GetPrintDoc.Name = "Печать - " & SourceDoc.Name
+        .SetSeparationsShift SEPARATIONS_SHIFT
+        .Separate Shapes
+        .GetShapesToPrint.Group.Name = "на печать"
+        .GetShapesToCut.Group.Name = "на резку"
     End With
-    SourceDoc.Activate
     
 Finally:
     BoostFinish
@@ -210,7 +219,7 @@ Public Sub NumberSetter()
     If AlexPress.RELEASE Then On Error GoTo Catch
         
     Dim Shapes As ShapeRange
-    With InitData.GetShapes(ErrNoSelection:="Выделите текстовые объекты")
+    With InputData.RequestShapes(ErrNoSelection:="Выделите текстовые объекты")
         If .IsError Then Exit Sub
         Set Shapes = .Shapes.Shapes.FindShapes(Type:=cdrTextShape)
     End With
@@ -816,3 +825,25 @@ Private Sub DeleteFiles(ByVal Files As Collection)
         VBA.Kill File
     Next File
 End Sub
+
+Private Function FindSpotColorInCol( _
+                     ByVal Colors As Collection, _
+                     ByVal Name As String _
+                 ) As Color
+    Dim Color As Color
+    For Each Color In Colors
+        If Color.Name = Name And Color.IsSpot Then
+            Set FindSpotColorInCol = Color.GetCopy
+            Exit Function
+        End If
+    Next Color
+End Function
+
+Private Function NotifyIfColorIsNothing( _
+                     ByVal Color As Color, _
+                     ByVal Name As String _
+                 ) As Boolean
+    If Not Color Is Nothing Then Exit Function
+    VBA.MsgBox "В выделенных объектах нет цвета " & Name, vbExclamation
+    NotifyIfColorIsNothing = True
+End Function
