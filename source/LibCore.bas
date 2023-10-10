@@ -1,7 +1,7 @@
 Attribute VB_Name = "LibCore"
 '===============================================================================
 '   Модуль          : LibCore
-'   Версия          : 2023.07.23
+'   Версия          : 2023.09.01
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
 '   Использован код : dizzy (из макроса CtC), Alex Vakulenko
 '                     и др.
@@ -1316,10 +1316,10 @@ Public Sub SetOutlineColor( _
 End Sub
 
 Public Sub SwapOrientation(ByVal Page As Page)
-    Dim x As Variant
-    x = Page.SizeHeight
+    Dim X As Variant
+    X = Page.SizeHeight
     Page.SizeHeight = Page.SizeWidth
-    Page.SizeWidth = x
+    Page.SizeWidth = X
 End Sub
 
 Public Sub Trim( _
@@ -1638,12 +1638,18 @@ Public Property Get Contains( _
     Contains = True
 End Property
 
-Public Property Get Count(ByRef Arr As Variant) As Long
-    Count = UBound(Arr) - LBound(Arr) + 1
+Public Property Get Count( _
+                        ByRef Arr As Variant, _
+                        Optional ByVal Dimension As Long = 1 _
+                    ) As Long
+    Count = UBound(Arr, Dimension) - LBound(Arr, Dimension) + 1
 End Property
 
-Public Property Get CountCopy(ByVal Arr As Variant) As Long
-    CountCopy = UBound(Arr) - LBound(Arr) + 1
+Public Property Get CountCopy( _
+                        ByVal Arr As Variant, _
+                        Optional ByVal Dimension As Long = 1 _
+                    ) As Long
+    CountCopy = Count(Arr, Dimension)
 End Property
 
 'https://www.codegrepper.com/code-examples/vb/excel+vba+generate+guid+uuid
@@ -1718,8 +1724,8 @@ Public Function GetDictionaryCopy( _
 End Function
 
 'является ли число чётным :) Что такое Even и Odd запоминать лень...
-Public Property Get IsChet(ByVal x As Variant) As Boolean
-    If x Mod 2 = 0 Then IsChet = True Else IsChet = False
+Public Property Get IsChet(ByVal X As Variant) As Boolean
+    If X Mod 2 = 0 Then IsChet = True Else IsChet = False
 End Property
 
 'делится ли Number на Divider нацело
@@ -1896,11 +1902,11 @@ Public Sub Show(ByRef Variable As Variant)
     End If
 End Sub
 
-Public Sub Swap(ByRef x As Variant, ByRef y As Variant)
+Public Sub Swap(ByRef X As Variant, ByRef Y As Variant)
     Dim z As Variant
-    z = x
-    x = y
-    y = z
+    z = X
+    X = Y
+    Y = z
 End Sub
 
 Public Sub Throw(Optional ByVal Message As String = "Неизвестная ошибка")
@@ -2062,10 +2068,10 @@ Private Sub UnitSpaceBox()
 End Sub
 
 Private Sub UnitSwap()
-    Dim x As Long, y As Long
-    x = 1
-    y = 2
-    Swap x, y
-    Debug.Assert x = 2
-    Debug.Assert y = 1
+    Dim X As Long, Y As Long
+    X = 1
+    Y = 2
+    Swap X, Y
+    Debug.Assert X = 2
+    Debug.Assert Y = 1
 End Sub

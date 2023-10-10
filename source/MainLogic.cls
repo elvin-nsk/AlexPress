@@ -36,16 +36,16 @@ Attribute This.VB_VarHelpID = -1
 '===============================================================================
 ' # Constructors
 
-Public Function Create( _
+Public Function New_( _
                     ByVal View As MainView _
                 ) As MainLogic
-    Set Create = New MainLogic
+    Set New_ = New MainLogic
     Dim Cfg As Config
-    Set Cfg = Config.Bind
+    Set Cfg = Config.Bind_
     FillViewFromCfg View, Cfg
     View.BleedsMin = 0.1
     View.BleedsMax = 10000
-    Create.Inject Cfg
+    New_.Inject Cfg
 End Function
 
 Friend Sub Inject( _
@@ -88,7 +88,7 @@ Public Sub AddMarksAndSeparate(ByVal View As MainView)
         If .IsError Then Exit Sub
         Set Shapes = .Shapes
     End With
-    
+           
     Dim ColorCol As Collection
     Set ColorCol = GetBoundColors(FindAllShapes(Shapes))
     Dim CutColor As Color
@@ -230,7 +230,7 @@ Public Sub NumberSetter()
     Dim Prefix As String
     Dim StartingNumber As Long
     With New NumberSetterView
-        .Show
+        .Show vbModal
         If .IsCancel Then Exit Sub
         Prefix = .Prefix
         StartingNumber = .StartingNumber
@@ -242,6 +242,28 @@ Public Sub NumberSetter()
     
 Finally:
     BoostFinish
+    Exit Sub
+
+Catch:
+    MsgBox "Ошибка: " & Err.Description, vbCritical
+    Resume Finally
+End Sub
+
+Public Sub Settings()
+
+    If AlexPress.RELEASE Then On Error GoTo Catch
+
+    With New SettingsView
+        .TextBoxWorkLogsPath = This.Cfg.WorkLogsPath
+        .OptionWorkLogsEnabled = This.Cfg.WorkLogsEnabled
+        
+        .Show vbModal
+        
+        This.Cfg.WorkLogsPath = .TextBoxWorkLogsPath
+        This.Cfg.WorkLogsEnabled = .OptionWorkLogsEnabled
+    End With
+    
+Finally:
     Exit Sub
 
 Catch:
@@ -766,10 +788,10 @@ End Function
 
 Private Function PlacePlotterMark( _
                      ByVal Layer As Layer, _
-                     ByVal x As Double, ByVal y As Double _
+                     ByVal X As Double, ByVal Y As Double _
                  ) As Shape
     Set PlacePlotterMark = _
-        Layer.CreateEllipse2(x, y, PLOTTER_MARK_DIAMETER / 2)
+        Layer.CreateEllipse2(X, Y, PLOTTER_MARK_DIAMETER / 2)
     PlacePlotterMark.Outline.SetNoOutline
     PlacePlotterMark.Fill.ApplyUniformFill CreateColor(PLOTTER_MARK_COLOR)
 End Function

@@ -45,6 +45,9 @@ Public PressSheetWidth As Double
 
 Public StickerSpace As Double
 
+Public WorkLogsPath As String
+Public WorkLogsEnabled As Boolean
+
 '-------------------------------------------------------------------------------
 
 Private Sub Assign(ByVal Action As iniAction)
@@ -77,6 +80,10 @@ Private Sub Assign(ByVal Action As iniAction)
         
         .Section = "Sticker"
         .KeyVar "StickerSpace", StickerSpace, 3
+        
+        .Section = "WorkLogger"
+        .KeyVar "WorkLogsPath", WorkLogsPath, "c:\temp\"
+        .KeyVar "WorkLogsEnabled", WorkLogsEnabled, False
     
     End With
     
@@ -113,9 +120,9 @@ End Sub
 '===============================================================================
 ' # Constructors
 
-Public Function Bind() As Config
-    Set Bind = New Config
-    Bind.ForceLoad
+Public Function Bind_() As Config
+    Set Bind_ = New Config
+    Bind_.ForceLoad
 End Function
 
 #If Not ReadOnly Then

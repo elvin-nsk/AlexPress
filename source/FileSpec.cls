@@ -23,9 +23,9 @@ Private This As typeThis
 
 '===============================================================================
 
-Public Function Create(Optional ByVal File As String) As IFileSpec
+Public Function New_(Optional ByVal File As String) As IFileSpec
     With New FileSpec
-        Set Create = .Init(File)
+        Set New_ = .Init(File)
     End With
 End Function
 
@@ -49,7 +49,7 @@ Private Property Let IFileSpec_Ext(ByVal RHS As String)
 End Property
 
 Private Property Get IFileSpec_GetCopy() As IFileSpec
-    With FileSpec.Create
+    With FileSpec.New_
         .Path = This.Path
         .NameWithoutExt = This.NameWithoutExt
         .Ext = This.Ext

@@ -63,7 +63,7 @@ Private Function ExportSurface( _
                      ByVal ioCollectionOfFiles As Collection _
                  )
     Dim File As IFileSpec
-    Set File = FileSpec.Create
+    Set File = FileSpec.New_
     File.Path = TempFolder
     File.Ext = "cdr"
     File.NameWithoutExt = CreateGUID

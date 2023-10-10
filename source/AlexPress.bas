@@ -1,7 +1,7 @@
 Attribute VB_Name = "AlexPress"
 '===============================================================================
 '   Макрос          : AlexPress
-'   Версия          : 2023.08.14
+'   Версия          : 2023.10.09
 '   Сайты           : https://vk.com/elvin_macro/
 '                     https://github.com/elvin-nsk/AlexPress
 '   Автор           : elvin-nsk (me@elvin.nsk.ru)
@@ -27,6 +27,8 @@ Public Const CUT_COLOR_NAME As String = "CutContour"
 Public Const PERFCUT_COLOR_NAME As String = "CutContour Perfcut"
 Public Const WHITE_COLOR_NAME As String = "White"
 Public Const SEPARATIONS_SHIFT As Double = 25 'процентов от размера
+
+Public OpenCloseHandler As FilesOpenCloseLogger
 
 '===============================================================================
 

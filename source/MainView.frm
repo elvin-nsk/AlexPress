@@ -39,24 +39,25 @@ Private WithEvents Host As Application
 Attribute Host.VB_VarHelpID = -1
 
 '===============================================================================
+' # Event handlers
 
 Private Sub UserForm_Initialize()
     Set Host = Application
     Set This.Motifs = New MotifsCollector
-    Set This.Main = MainLogic.Create(Me)
+    Set This.Main = MainLogic.New_(Me)
     With This
         Set This.MotifsSpaces = _
-            TextBoxHandler.Create(MotifsSpaces, TextBoxTypeDouble, 0)
+            TextBoxHandler.New_(MotifsSpaces, TextBoxTypeDouble, 0)
         Set This.PressSheetWidth = _
-            TextBoxHandler.Create(PressSheetWidth, TextBoxTypeDouble, 1)
+            TextBoxHandler.New_(PressSheetWidth, TextBoxTypeDouble, 1)
         Set This.PressSheetHeight = _
-            TextBoxHandler.Create(PressSheetHeight, TextBoxTypeDouble, 1)
+            TextBoxHandler.New_(PressSheetHeight, TextBoxTypeDouble, 1)
         Set This.PressSheetSpaces = _
-            TextBoxHandler.Create(PressSheetSpaces, TextBoxTypeDouble, 0)
+            TextBoxHandler.New_(PressSheetSpaces, TextBoxTypeDouble, 0)
         Set This.StickerSpace = _
-            TextBoxHandler.Create(StickerSpace, TextBoxTypeDouble, 0)
+            TextBoxHandler.New_(StickerSpace, TextBoxTypeDouble, 0)
         Set This.QuantityOnPressSheet = _
-            TextBoxHandler.Create(QuantityOnPressSheet, TextBoxTypeLong, 1)
+            TextBoxHandler.New_(QuantityOnPressSheet, TextBoxTypeLong, 1)
     End With
 End Sub
 
@@ -153,6 +154,10 @@ Private Sub CreateImpositions_Click()
     This.ImpositionCreated = True
 End Sub
 
+Private Sub StartSettings_Click()
+    This.Main.Settings
+End Sub
+
 Private Sub StartNumberSetter_Click()
     This.Main.NumberSetter
 End Sub
@@ -166,6 +171,7 @@ Private Sub Host_SelectionChange()
 End Sub
 
 '===============================================================================
+' # Logic
 
 Private Sub CheckControls()
     ExecutabilityCheck

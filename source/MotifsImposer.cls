@@ -296,8 +296,8 @@ Private Function AlignImposition( _
                 ComposedShapes.TopY _
             )
     Else
-        ComposedShapes.LeftX = Pivot.x
-        ComposedShapes.TopY = Pivot.y
+        ComposedShapes.LeftX = Pivot.X
+        ComposedShapes.TopY = Pivot.Y
     End If
 End Function
 
