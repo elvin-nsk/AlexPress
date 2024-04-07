@@ -300,29 +300,6 @@ End Sub
 '===============================================================================
 ' # Public
 
-Public Sub ProcessPdfExport(ByVal ExportToPageSize As Boolean)
-    With ActiveDocument.PDFSettings
-        If ExportToPageSize Then
-            .PublishRange = pdfCurrentPage
-        Else
-            .PublishRange = pdfSelection
-        End If
-    End With
-    Dim File As FileSpec: Set File = FileSpec.New_
-    File.Path = This.Cfg.ExportPdfPath
-    File.Name = ActiveDocument.FileName
-    File.Ext = "pdf"
-    Dim FileCopy As FileSpec
-    Dim Page As Page
-    For Each Page In ActiveDocument.Pages
-        Page.Activate
-        Page.Shapes.All.CreateSelection
-        Set FileCopy = File.GetCopy
-        FileCopy.BaseName = File.BaseName & "-" & Page.Index
-        ActiveDocument.PublishToPDF FileCopy
-    Next Page
-End Sub
-
 Public Property Get RotatePageToMaxFit( _
                         ByVal ImpositionArea As Rect, _
                         ByVal Box As Rect _
@@ -921,3 +898,31 @@ Private Function NotifyIfColorIsNothing( _
     VBA.MsgBox "В выделенных объектах нет цвета " & Name, vbExclamation
     NotifyIfColorIsNothing = True
 End Function
+
+Public Sub ProcessPdfExport(ByVal ExportToPageSize As Boolean)
+    With ActiveDocument.PDFSettings
+        If ExportToPageSize Then
+            .PublishRange = pdfCurrentPage
+        Else
+            .PublishRange = pdfSelection
+        End If
+    End With
+    Dim File As FileSpec: Set File = FileSpec.New_
+    File.Path = This.Cfg.ExportPdfPath
+    File.Name = ActiveDocument.FileName
+    File.Ext = "pdf"
+    Dim FileCopy As FileSpec
+    Dim PBar As ProgressBar: Set PBar = _
+        ProgressBar.New_(Max:=ActiveDocument.Pages.Count)
+    PBar.Cancelable = True
+    Dim Page As Page
+    For Each Page In ActiveDocument.Pages
+        Page.Activate
+        Page.Shapes.All.CreateSelection
+        Set FileCopy = File.GetCopy
+        FileCopy.BaseName = File.BaseName & "-" & Page.Index
+        ActiveDocument.PublishToPDF FileCopy
+        PBar.Update
+        If PBar.Canceled Then Exit Sub
+    Next Page
+End Sub
