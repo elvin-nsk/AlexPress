@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} MainView 
    Caption         =   "AlexPress"
-   ClientHeight    =   5520
+   ClientHeight    =   6000
    ClientLeft      =   45
    ClientTop       =   375
    ClientWidth     =   7755
@@ -160,6 +160,10 @@ End Sub
 
 Private Sub StartNumberSetter_Click()
     This.Main.NumberSetter
+End Sub
+
+Private Sub ExportPdf_Click()
+    This.Main.ExportPdf
 End Sub
 
 Private Sub StickerRun_Click()

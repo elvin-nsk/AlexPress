@@ -36,6 +36,7 @@ Public PagesToAdd As Long
 Public MotifsSpaces As Double
 Public OptionCutmarks As Boolean
 Public OptionNoBacks As Boolean
+Public OptionNoMarks As Boolean
 Public OptionPlotter As Boolean
 Public OptionRastr As Boolean
 Public OptionWithBacks As Boolean
@@ -47,6 +48,8 @@ Public StickerSpace As Double
 
 Public WorkLogsPath As String
 Public WorkLogsEnabled As Boolean
+
+Public ExportPdfPath As String
 
 '-------------------------------------------------------------------------------
 
@@ -71,6 +74,7 @@ Private Sub Assign(ByVal Action As iniAction)
         .KeyVar "MotifsSpaces", MotifsSpaces, 0
         .KeyVar "OptionCutmarks", OptionCutmarks, True
         .KeyVar "OptionNoBacks", OptionNoBacks, False
+        .KeyVar "OptionNoMarks", OptionNoMarks, False
         .KeyVar "OptionPlotter", OptionPlotter, False
         .KeyVar "OptionRastr", OptionRastr, False
         .KeyVar "OptionWithBacks", OptionWithBacks, True
@@ -84,6 +88,9 @@ Private Sub Assign(ByVal Action As iniAction)
         .Section = "WorkLogger"
         .KeyVar "WorkLogsPath", WorkLogsPath, "c:\temp\"
         .KeyVar "WorkLogsEnabled", WorkLogsEnabled, False
+        
+        .Section = "ExportPdf"
+        .KeyVar "ExportPdfPath", ExportPdfPath, "c:\temp\"
     
     End With
     

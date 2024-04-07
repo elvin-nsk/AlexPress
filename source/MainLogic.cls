@@ -271,8 +271,57 @@ Catch:
     Resume Finally
 End Sub
 
+Public Sub ExportPdf()
+
+    If AlexPress.RELEASE Then On Error GoTo Catch
+    
+    With InputData.RequestDocumentOrPage
+        If .IsError Then Exit Sub
+    End With
+    
+    With New ExportPdfView
+        .TextBoxPdfPath = This.Cfg.ExportPdfPath
+        
+        .Show vbModal
+        
+        This.Cfg.ExportPdfPath = .TextBoxPdfPath
+        If Not .IsCancel Then ProcessPdfExport .IsExportToPageSize
+        
+    End With
+    
+Finally:
+    Exit Sub
+
+Catch:
+    MsgBox "Œ¯Ë·Í‡: " & Err.Description, vbCritical
+    Resume Finally
+End Sub
+
 '===============================================================================
 ' # Public
+
+Public Sub ProcessPdfExport(ByVal ExportToPageSize As Boolean)
+    With ActiveDocument.PDFSettings
+        If ExportToPageSize Then
+            .PublishRange = pdfCurrentPage
+        Else
+            .PublishRange = pdfSelection
+        End If
+    End With
+    Dim File As FileSpec: Set File = FileSpec.New_
+    File.Path = This.Cfg.ExportPdfPath
+    File.Name = ActiveDocument.FileName
+    File.Ext = "pdf"
+    Dim FileCopy As FileSpec
+    Dim Page As Page
+    For Each Page In ActiveDocument.Pages
+        Page.Activate
+        Page.Shapes.All.CreateSelection
+        Set FileCopy = File.GetCopy
+        FileCopy.BaseName = File.BaseName & "-" & Page.Index
+        ActiveDocument.PublishToPDF FileCopy
+    Next Page
+End Sub
 
 Public Property Get RotatePageToMaxFit( _
                         ByVal ImpositionArea As Rect, _
@@ -319,6 +368,7 @@ Private Function FillViewFromCfg( _
         .MotifsSpaces = Cfg.MotifsSpaces
         .OptionCutmarks = Cfg.OptionCutmarks
         .OptionNoBacks = Cfg.OptionNoBacks
+        .OptionNoMarks = Cfg.OptionNoMarks
         .OptionPlotter = Cfg.OptionPlotter
         .OptionRastr = Cfg.OptionRastr
         .OptionWithBacks = Cfg.OptionWithBacks
@@ -350,6 +400,7 @@ Private Sub FillCfgFromView(ByVal View As MainView)
         This.Cfg.MotifsSpaces = .MotifsSpaces
         This.Cfg.OptionCutmarks = .OptionCutmarks
         This.Cfg.OptionNoBacks = .OptionNoBacks
+        This.Cfg.OptionNoMarks = .OptionNoMarks
         This.Cfg.OptionPlotter = .OptionPlotter
         This.Cfg.OptionRastr = .OptionRastr
         This.Cfg.OptionWithBacks = .OptionWithBacks
@@ -694,6 +745,7 @@ Private Sub PlaceInfoInDoc( _
                 ByVal ImpositionRanges As Collection, _
                 ByVal PlaceOnlyOnOdd As Boolean _
             )
+    If This.Cfg.OptionNoMarks Then Exit Sub
     Dim Page As Page
     For Each Page In Doc.Pages
         TryPlaceInfoOnPage Page, ImpositionRanges, PlaceOnlyOnOdd
@@ -842,7 +894,7 @@ Private Property Get FilterRangesByPageIndex( _
 End Property
 
 Private Sub DeleteFiles(ByVal Files As Collection)
-    Dim File As IFileSpec
+    Dim File As FileSpec
     For Each File In Files
         VBA.Kill File
     Next File

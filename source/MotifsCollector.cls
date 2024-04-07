@@ -62,11 +62,11 @@ Private Function ExportSurface( _
                      ByVal ioSurface As Surface, _
                      ByVal ioCollectionOfFiles As Collection _
                  )
-    Dim File As IFileSpec
+    Dim File As FileSpec
     Set File = FileSpec.New_
     File.Path = TempFolder
     File.Ext = "cdr"
-    File.NameWithoutExt = CreateGUID
+    File.BaseName = CreateGUID
     Dim Options As StructSaveAsOptions
     Set Options = CreateStructSaveAsOptions
     Options.Range = cdrSelection

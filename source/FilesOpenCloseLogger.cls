@@ -115,7 +115,7 @@ Private Function GetDocTimeAndRemoveFromList( _
 End Function
 
 Private Sub WriteLogFile(ByVal FileName As String, ByVal Minutes As Long)
-    Dim File As IFileSpec
+    Dim File As FileSpec
     Set File = FileSpec.New_
     File.Path = This.Path
     File.Name = FileName
@@ -126,10 +126,10 @@ Private Sub WriteLogFile(ByVal FileName As String, ByVal Minutes As Long)
         File
 End Sub
 
-Private Function CheckForExistanceAndRename(ByVal ioFile As IFileSpec)
+Private Function CheckForExistanceAndRename(ByVal ioFile As FileSpec)
     Dim Counter As Long
     Do While FileExists(ioFile) And Counter < 1000
-        ioFile.NameWithoutExt = ioFile.NameWithoutExt & "+"
+        ioFile.BaseName = ioFile.BaseName & "+"
         Counter = Counter + 1
     Loop
     'Debug.Print Counter
