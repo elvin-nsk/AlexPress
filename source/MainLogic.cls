@@ -920,7 +920,7 @@ Public Sub ProcessPdfExport(ByVal ExportToPageSize As Boolean)
         Page.Activate
         Page.Shapes.All.CreateSelection
         Set FileCopy = File.GetCopy
-        FileCopy.BaseName = File.BaseName & "-" & Page.Index
+        FileCopy.BaseName = File.BaseName & "-" & Page.Index & "-" & Page.Name
         ActiveDocument.PublishToPDF FileCopy
         PBar.Update
         If PBar.Canceled Then Exit Sub
